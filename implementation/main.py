@@ -20,6 +20,30 @@ def parse_args() -> argparse.Namespace:
 
 
 
+def print_measurement_summary(data: ParticleSizesData) -> None:
+    """
+    Prints a formatted table of per-source particle counts with a total row.
+    """
+    print("=====================================================================")
+    print("Measurement counts from different images/files:")
+    print()
+    sorted_counts :list[tuple[str, int]] = sorted(data.counts.items())
+    max_filename_length = max(len(name) for name in data.counts)
+    max_filename_length = max(max_filename_length+5, 30)
+    # print header
+    print(f"{'File/image':<{max_filename_length}}|{'Count':>10}")
+    print('-'*(max_filename_length + 11))
+
+    for name, count in sorted_counts:
+        print(f"{name:<{max_filename_length}}|{count:>10,}")
+    
+    # print the total count
+    print('-'*(max_filename_length + 11))
+    print(f"{'TOTAL':<{max_filename_length}}|{sum(data.counts.values()):>10,}")
+    print('-'*(max_filename_length + 11))
+    print("=====================================================================")
+
+
 def main():
     """Entry point: initialises the app, selects a data loader, and prints loaded sizes."""
     initialize_application()
@@ -35,6 +59,7 @@ def main():
     
     try:
         data: ParticleSizesData = data_loader.load_data()
+        print_measurement_summary(data)
 
     except AppError as e:
         print(f"Error: {e.message}")

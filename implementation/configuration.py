@@ -1,0 +1,59 @@
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+import logging
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# loading environment variables regardless of the current working directory
+load_dotenv(dotenv_path=PROJECT_ROOT / '.env')
+
+SEPARATOR = os.getenv('SEPARATOR', '---')
+END_OF_INPUT = os.getenv('END_OF_INPUT', 'END')
+
+CSV_PARTICLE_COLUMN_NAME = os.getenv('CSV_COLUMN_NAME', 'Length')
+
+INPUT_DATA_PATH = PROJECT_ROOT / os.getenv('INPUT_DATA_PATH', 'data/input_data')
+OUTPUT_DATA_PATH = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_data')
+LOG_DIR = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
+
+
+def _setup_directories():
+    """Creates input, output, and log directories if they do not already exist."""
+    # create input and output directories if they don't exist
+    INPUT_DATA_PATH.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DATA_PATH.mkdir(parents=True, exist_ok=True)
+
+    # create a directory for logs if it doesn't exist
+    LOG_DIR.mkdir(exist_ok=True)
+
+
+def _setup_logging():
+    """
+    Sets up logging for the application. Logs will be written to both console and a log file.
+    """
+    # logger = input point
+    # handler = output point
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    # handler for console output - user-friendly messages
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter('%(message)s')
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
+    # handler for file output - detailed logs
+    file_handler = logging.FileHandler(LOG_DIR / 'app.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(file_formatter)   
+    logger.addHandler(file_handler)
+
+def initialize_application():
+    """
+    Initializes the application by setting up directories and logging.
+    """
+    _setup_directories()
+    _setup_logging()

@@ -30,7 +30,7 @@ class MissingColumnError(InvalidInputError):
 class EmptyMeasurementsError(InvalidInputError):
     """Raised when the input contains no valid measurements."""
     def __init__(self, file_path: Path):
-        super().__init__(f"No valid measurements found '{file_path.name}'.")
+        super().__init__(f"No valid measurements found in '{file_path.name}'.")
 
 
 class UnsupportedFileTypeError(AppError):

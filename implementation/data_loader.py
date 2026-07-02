@@ -1,15 +1,12 @@
 import numpy as np
 
-import pandas as pd
-from pandas.errors import EmptyDataError, ParserError
-from pandas import Series
-
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from pathlib import Path
 import logging
 
-from domain_errors import InvalidFileFormatError, MissingColumnError, EmptyMeasurementsError, AppError
+from domain_errors import InvalidFileFormatError, MissingColumnError, EmptyMeasurementsError, AppError, UnsupportedFileTypeError
+from file_loader import FileLoader, CsvFileLoader, ExcelFileLoader
 
 
 @dataclass
@@ -24,14 +21,14 @@ class ParticleSizesData:
     total_count: int
 
 
-class ParticleDataLoader(ABC):
+class DataLoader(ABC):
     """Abstract base class for all particle-size data loaders."""
     @abstractmethod
-    def load_data(self) -> ParticleSizesData:
+    def load_data(self) -> ParticleSizesData | None:
         pass
 
 
-class ConsoleDataLoader(ParticleDataLoader):
+class ConsoleLoader(DataLoader):
     """Reads particle sizes interactively from stdin, grouped by separator tokens."""
     def __init__(self, separator: str, end_of_input: str):
         self.separator = separator
@@ -45,12 +42,13 @@ class ConsoleDataLoader(ParticleDataLoader):
         print(f"Type '{self.end_of_input}' to finish input.")
         print("=====================================================================")
 
+
     def load_data(self) -> ParticleSizesData:
         """Reads lines from stdin until end_of_input; separator lines delimit measurement groups."""
         self._print_user_instructions()
 
-        sizes = list[float]()
-        counts = dict[str, int]()
+        sizes: list[float] = []
+        counts :dict[str, int] = {}
 
         count = 0       # measurements in the current group
         input_number = 1
@@ -77,99 +75,47 @@ class ConsoleDataLoader(ParticleDataLoader):
         return ParticleSizesData(sizes=np.array(sizes), counts=counts, total_count=len(sizes))
 
 
-class CSVDataLoader:
-    """Loads particle sizes from a single CSV file."""
-    def __init__(self, input_file: Path, particle_column_name: str):
-        self.input_file = input_file
-        self.particle_column_name = particle_column_name
-
-    def _load_csv_to_dataframe(self, file_path: Path) -> pd.DataFrame:
-        """Loads a local CSV file into a Pandas DataFrame."""
-        try:
-            return pd.read_csv(file_path, encoding='utf-8')
-
-        except FileNotFoundError:
-            logging.error(f"File not found: '{file_path}'.")
-            raise
-
-        except EmptyDataError:
-            logging.error(f"File is empty: '{file_path}'.")
-            raise EmptyMeasurementsError()
-
-        except ParserError as ex:
-            logging.error(f"Parsing error at '{file_path}': {ex}")
-            raise InvalidFileFormatError()
-
-        except PermissionError:
-            logging.error(f"Permission denied: '{file_path}'.")
-            raise
-
-        except Exception as ex:
-            logging.error(f"Unexpected error loading CSV '{file_path}': {ex}")
-            raise
-
-
-    def load_data(self) -> np.ndarray | None:
-        """
-        Loads particle sizes from a CSV file and returns them as a NumPy array. 
-        Returns None if no valid measurements are found.
-        """
-        try:
-            df : pd.DataFrame = self._load_csv_to_dataframe(self.input_file)
-            series: Series = df[self.particle_column_name].dropna()
-            try:
-            # replacing , with . and explicitly requiring numeric type
-                sizes :np.ndarray = series.astype(str).str.replace(',', '.').astype(np.float64).to_numpy()
-            except ValueError as ex:
-                raise InvalidFileFormatError() from ex  # column contains non-numeric values
-            
-            
-            if len(sizes) == 0:
-                raise EmptyMeasurementsError()
-            
-            return sizes
-        
-        except EmptyMeasurementsError as e:
-            logging.warning(e.message + f" Skipping file '{self.input_file}'.")
-            return None
-        
-        except KeyError as ex:
-            error: MissingColumnError = MissingColumnError(self.particle_column_name)
-            logging.error(error.message)
-            raise error from ex
-        
-        except (FileNotFoundError, InvalidFileFormatError, PermissionError) as e:
-            raise  # propagate raw so DirectoryCSVDataLoader can track them as invalid files
-        
-        except Exception as ex:  # last-resort catch to ensure the error is logged
-            logging.error(f"An unexpected error occurred while loading data from '{self.input_file}': {ex}")
-            raise
-
-
-class DirectoryCSVDataLoader(ParticleDataLoader):
-    """Recursively loads particle sizes from all CSV files in a directory."""
-    def __init__(self, directory_path: Path, particle_column_name: str):
+class DirectoryLoader(DataLoader):
+    """Abstract base class for data loaders that recursively read from a directory."""
+    def __init__(self, directory_path: Path, particle_column_name: str = "Length", particle_column_index: int = -1):
         self.directory_path : Path = directory_path
-        self.csv_paths :list[Path] = list(self.directory_path.rglob("*.csv"))
         self.particle_column_name : str = particle_column_name
+        self.particle_column_index : int = particle_column_index
+        self.file_paths :list[Path]= []
+
+        for p in self.directory_path.rglob("*"):
+            if p.suffix.lower() in ['.csv', '.xlsx', '.xls']:
+                self.file_paths.append(p)
+    
+
+    def _create_loader(self, file_path: Path) -> FileLoader:
+        """Factory method to create the appropriate loader based on file extension."""
+        if file_path.suffix.lower() == '.csv':
+            return CsvFileLoader(file_path, self.particle_column_name)
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            return ExcelFileLoader(file_path, self.particle_column_index)
+        else:
+            er = UnsupportedFileTypeError(file_path)
+            logging.error(er.message)
+            raise er
+
 
     def load_data(self) -> ParticleSizesData:
-        """Aggregates sizes from every CSV; raises AppError if any file could not be loaded."""
-        sizes = list[float]()
-        counts = dict[str, int]()
-        invalid_files = []
+        sizes :list[float] = []
+        counts :dict[str, int] = {}
+        invalid_files : list[str] = []
 
-        for csv_filepath in self.csv_paths:
-            csv_loader = CSVDataLoader(csv_filepath, self.particle_column_name)
+        for path in self.file_paths:
+            file_loader = self._create_loader(path)
             try:
-                particle_sizes = csv_loader.load_data()
+                particle_sizes = file_loader.load_data()
                 if particle_sizes is not None:
                     # flatten guards against unexpected 2-D arrays from multi-column CSVs
                     sizes.extend(particle_sizes.flatten())
-                    counts[csv_filepath.name] = len(particle_sizes)
+                    counts[path.name] = len(particle_sizes)
 
-            except (FileNotFoundError, InvalidFileFormatError, MissingColumnError, PermissionError) as e:
-                invalid_files.append(csv_filepath.name)
+            except (FileNotFoundError, InvalidFileFormatError, MissingColumnError, UnsupportedFileTypeError, PermissionError) as e:
+                invalid_files.append(path.name)
                 continue  # Skip to the next file
 
         # raise rather than silently return partial data — the user must fix broken files
@@ -182,11 +128,9 @@ class DirectoryCSVDataLoader(ParticleDataLoader):
             raise AppError(message)
 
         elif (len(sizes) == 0):
-            message = "No valid particle size measurements were found in the provided CSV files."
+            message = "No valid particle size measurements were found in the provided files."
             logging.error(message)
-            raise EmptyMeasurementsError()
+            raise EmptyMeasurementsError(self.directory_path)
 
         return ParticleSizesData(sizes=np.array(sizes), counts=counts, total_count=len(sizes))
-        
 
-    

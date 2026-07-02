@@ -3,21 +3,20 @@ import sys
 
 
 from domain_errors import AppError
-from data_loader import ConsoleDataLoader, DirectoryCSVDataLoader, ParticleDataLoader, ParticleSizesData
+from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
 from configuration import initialize_application
-from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, INPUT_DATA_PATH, OUTPUT_DATA_PATH
+from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX, INPUT_DATA_PATH, OUTPUT_DATA_PATH
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
     parser = argparse.ArgumentParser(description="Nanoparticle size distribution analysis tool")
     parser.add_argument(
         "--source",
-        choices=["console", "csv"],
-        default="csv",
-        help="Where to load particle size data from (default: csv)"
+        choices=["console", "file"],
+        default="file",
+        help="Where to load particle size data from (default: file)"
     )
     return parser.parse_args()
-
 
 
 def print_measurement_summary(data: ParticleSizesData) -> None:
@@ -50,13 +49,10 @@ def main():
     args = parse_args()
 
     if args.source == "console":
-        data_loader = ConsoleDataLoader(SEPARATOR, END_OF_INPUT)
-    elif args.source == "csv":
-        data_loader = DirectoryCSVDataLoader(INPUT_DATA_PATH, CSV_PARTICLE_COLUMN_NAME)
-    else:
-        # unreachable — argparse enforces the choices above
-        raise ValueError(f"Invalid source '{args.source}'. Valid options are 'console' or 'csv'.")
-    
+        data_loader = ConsoleLoader(SEPARATOR, END_OF_INPUT)
+    else:  # args.source == "file"
+        data_loader = DirectoryLoader(INPUT_DATA_PATH, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX)
+        
     try:
         data: ParticleSizesData = data_loader.load_data()
         print_measurement_summary(data)

@@ -12,6 +12,7 @@ SEPARATOR = os.getenv('SEPARATOR', '---')
 END_OF_INPUT = os.getenv('END_OF_INPUT', 'END')
 
 CSV_PARTICLE_COLUMN_NAME = os.getenv('CSV_COLUMN_NAME', 'Length')
+XLSX_PARTICLE_COLUMN_INDEX = int(os.getenv('XLSX_COLUMN_INDEX', -1))  # default to -1 if not set
 
 INPUT_DATA_PATH = PROJECT_ROOT / os.getenv('INPUT_DATA_PATH', 'data/input_data')
 OUTPUT_DATA_PATH = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_data')

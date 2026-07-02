@@ -1,4 +1,4 @@
-
+from pathlib import Path
 
 
 class AppError(Exception):
@@ -17,17 +17,23 @@ class InvalidInputError(AppError):
 
 class InvalidFileFormatError(AppError):
     """Raised when a file's format/structure doesn't match what's expected."""
-    def __init__(self):
-        super().__init__("The input file format is invalid.")
+    def __init__(self, file_path: Path):
+        super().__init__(f"The input file '{file_path.name}' has an invalid format.")
 
 
 class MissingColumnError(InvalidInputError):
     """Raised when an expected column is not found in the input file."""
-    def __init__(self, column: str):
-        super().__init__(f"The input file is missing a column '{column}'.")
+    def __init__(self, column: str, file_path: Path):
+        super().__init__(f"Missing column '{column}' in '{file_path.name}'.")
 
 
 class EmptyMeasurementsError(InvalidInputError):
     """Raised when the input contains no valid measurements."""
-    def __init__(self):
-        super().__init__("The input data contains no valid measurements.")
+    def __init__(self, file_path: Path):
+        super().__init__(f"No valid measurements found '{file_path.name}'.")
+
+
+class UnsupportedFileTypeError(AppError):
+    """Raised when the input file type is not supported."""
+    def __init__(self, file_path: Path):
+        super().__init__(f"The input file '{file_path.name}' has an unsupported file type.")

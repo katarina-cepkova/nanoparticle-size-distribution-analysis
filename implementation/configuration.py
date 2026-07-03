@@ -18,6 +18,7 @@ INPUT_DATA_PATH = PROJECT_ROOT / os.getenv('INPUT_DATA_PATH', 'data/input_data')
 OUTPUT_DATA_PATH = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_data')
 LOG_DIR = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 
+DECIMAL_PLACES = int(os.getenv('DECIMAL_PLACES', 6))
 
 def _setup_directories():
     """Creates input, output, and log directories if they do not already exist."""

@@ -19,6 +19,7 @@ OUTPUT_DATA_PATH = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_dat
 LOG_DIR = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 
 DECIMAL_PLACES = int(os.getenv('DECIMAL_PLACES', 6))
+ALPHA = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
 
 def _setup_directories():
     """Creates input, output, and log directories if they do not already exist."""

@@ -14,6 +14,7 @@ class MomentsResult:
     cv: float         # coefficient of variation - relative variability (std/mean)
     median: float     # median - middle value of sorted data (robust to outliers)
     PDI: float        # polydispersity index - measure of size distribution width/uniformity
+    D32: float        # Sauter mean diameter - sum(d^3) / sum(d^2), surface-area-weighted mean size
     
 
 def compute_moments(data: np.ndarray) -> MomentsResult:
@@ -39,4 +40,9 @@ def compute_moments(data: np.ndarray) -> MomentsResult:
     # size distribution is vs. "monodisperse" (narrow, similar particle sizes)
     PDI: float = variance / mean**2
 
-    return MomentsResult(mean, variance, std, skewness, cv, median, PDI)
+    # D32 (Sauter mean diameter) = sum(d^3) / sum(d^2) - weights larger particles
+    # more heavily than the arithmetic mean; common in particle-size analysis
+    # since it reflects surface-area-to-volume ratio, not just count
+    D32 : float = float(np.sum(data**3) / np.sum(data**2))
+
+    return MomentsResult(mean, variance, std, skewness, cv, median, PDI, D32)

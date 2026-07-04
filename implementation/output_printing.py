@@ -32,14 +32,16 @@ def print_measurement_summary(printer: Printer, data: ParticleSizesData) -> None
     """
     Prints a formatted table of per-source particle counts with a total row.
     """
-    print_section_header(printer, "MEASUREMENT SUMMARY")
-
     sorted_counts :list[tuple[str, int]] = sorted(data.counts.items())
     max_filename_length :int = max(len(name) for name in data.counts)
     max_filename_length :int = max(max_filename_length+5, 30)  # +5 padding, floor of 30 for short names
     # print header
-    printer.print(f"{'File/image':<{max_filename_length}}|{'Count':>10}")
-    printer.print('-'*(max_filename_length + 11))
+    header :str = f"{'File/image':<{max_filename_length}}|{'Count':>10}"
+    header_width :int = len(header)
+
+    print_section_header(printer, "MEASUREMENT SUMMARY", header_width)
+    printer.print(header)
+    printer.print('-'* header_width)
 
     for name, count in sorted_counts:
         printer.print(f"{name:<{max_filename_length}}|{count:>10,}")
@@ -54,7 +56,6 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
     """
     Prints a formatted summary of the computed statistical moments.
     """
-    print_section_header(printer, "STATISTICAL MOMENTS")
 
     rows :list[tuple[str, float | None]] = [
         # central tendency — different ways of describing the "typical" particle size
@@ -77,14 +78,19 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
     label_width :int = max(len(label) for label, _ in rows)
     value_width :int = 10
 
-    printer.print(f"{'Metric':<{label_width}} | {'Value':>{value_width}}")
-    printer.print(f"{'-' * (label_width + value_width + 3)}")
+    header :str = f"{'Metric':<{label_width}} | {'Value':>{value_width}}"
+    header_width :int = len(header)
+
+    print_section_header(printer, "STATISTICAL MOMENTS", header_width)
+    printer.print(header)
+    printer.print(f"{'-' * header_width}")
+
     for label, value in rows:
         if value is None:
             printer.print()
         else:
             printer.print(f"{label:<{label_width}} | {value:>{value_width}.{DECIMAL_PLACES}f}")
-    printer.print(f"{'-' * (label_width + value_width + 3)}")
+    printer.print(f"{'-' * header_width}")
 
 
 def print_row(printer: Printer, label: str, values: list[float | str | None], col_width : int, label_width: int) -> None:
@@ -153,14 +159,25 @@ def get_table_widths(fits: list[FitResult], rows: list[Row]) -> tuple[int, int]:
     return label_width, col_width
 
 
-def print_table_header(printer: Printer, fits: list[FitResult], label_width: int, col_width: int) -> int:
+def build_table_header_string(fits: list[FitResult], label_width: int, col_width: int) -> str:
     """
-    Prints the header row for a table of distribution fits.
-    Returns the total width of the header line for use in printing a separator line.
+    Builds the 'Metric | Normal | Lognormal | Lorentzian' header line as a
+    plain string, without printing it. Used both by print_table_header (to
+    print it) and by callers that need to know the table's width in advance —
+    e.g. to size the '=' bar in print_section_header to match the table below it.
     """
     col_names :list[str] = [fit.distribution.capitalize() for fit in fits]
     distribution_names :list[str] = [f"{name:>{col_width}}" for name in col_names]
     header :str = f"{'Metric':<{label_width}} | " + " | ".join(distribution_names)
+
+    return header
+
+
+def print_table_header(printer: Printer, header: str) -> int:
+    """
+    Prints the header row for a table of distribution fits.
+    Returns the total width of the header line for use in printing a separator line.
+    """
     printer.print(header)
     header_width :int = len(header)
     printer.print('-' * header_width)
@@ -177,7 +194,11 @@ def print_grouped_distribution_table(printer: Printer, fits: list[FitResult], ro
     """
     all_rows :list[Row] = [row for group in row_groups for row in group]
     label_width, col_width = get_table_widths(fits, all_rows)
-    header_width :int = print_table_header(printer, fits, label_width, col_width)
+
+    header :str = build_table_header_string(fits, label_width, col_width)
+    header_width :int = len(header)
+    print_section_header(printer, "DISTRIBUTION FITTING and KS TEST RESULTS", header_width)
+    print_table_header(printer, header)
 
     for group in row_groups:
         for label, values in group:
@@ -243,8 +264,6 @@ def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: 
     mode, FWHM) and KS test results (statistic, p-value, verdict) side by
     side per distribution, with a divider line between the two blocks.
     """
-    print_section_header(printer, "DISTRIBUTION FITTING and KS TEST RESULTS")
-
     fit_rows :list[Row] = build_fit_rows(fits)
     ks_rows :list[Row] = build_ks_rows(ks_results)
 

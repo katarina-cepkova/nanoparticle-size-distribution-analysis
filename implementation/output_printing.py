@@ -57,14 +57,21 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
     print_section_header(printer, "STATISTICAL MOMENTS")
 
     rows = [
+        # central tendency — different ways of describing the "typical" particle size
         ("Mean (μ)", moments.mean),
+        ("Median", moments.median),
+        ("Sauter mean diameter (D32)", moments.D32),
+
+        # spread — absolute measures of variability (same units as the data / squared units)
         ("Variance (σ²)", moments.variance),
         ("Standard Deviation (σ)", moments.std),
-        ("Skewness", moments.skewness),
+
+        # spread — relative/dimensionless measures of variability (PDI = CV²)
         ("Coefficient of Variation (CV)", moments.cv),
-        ("Median", moments.median),
         ("Polydispersity Index (PDI)", moments.PDI),
-        ("Sauter mean diameter (D32)", moments.D32)
+
+        # shape — asymmetry of the distribution
+        ("Skewness", moments.skewness)
     ]
 
     label_width = max(len(label) for label, _ in rows)
@@ -189,19 +196,23 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
     rows :list[Row] = [
         (key.capitalize(), [fit.params.get(key) for fit in fits]) for key in PARAM_KEYS
     ]
-    rows.append(("Log-Likelihood", [fit.log_likelihood for fit in fits]))
+
+    rows.append(("Location",            [fit.loc for fit in fits]))
+    rows.append(("Scale",               [fit.scale for fit in fits]))
+    rows.append(("", []))
+    rows.append(("Theoretical mean",    [fit.theoretical_mean for fit in fits]))
+    rows.append(("Theoretical median",  [fit.theoretical_median for fit in fits]))
+    rows.append(("Theoretical mode",    [fit.theoretical_mode for fit in fits]))
+    rows.append(("FWHM",                [fit.fwhm for fit in fits]))
+    rows.append(("Relative FWHM",       [fit.rel_fwhm for fit in fits]))
+    rows.append(("", []))
+    rows.append(("Log-Likelihood",      [fit.log_likelihood for fit in fits]))
 
     # mark whichever fit has the highest log-likelihood as the best-fitting distribution
     best_log_likelihood :float = max(fit.log_likelihood for fit in fits)
     ll_verdict :list[float | str | None]  = ["BEST" if fit.log_likelihood == best_log_likelihood else "" for fit in fits]
 
-    rows.append(("LL Verdict",      ll_verdict))
-    rows.append(("Theoretical mode",    [fit.theoretical_mode for fit in fits]))
-    rows.append(("Theoretical median",  [fit.theoretical_median for fit in fits]))
-    rows.append(("FWHM",                [fit.fwhm for fit in fits]))
-    rows.append(("Relative FWHM",       [fit.rel_fwhm for fit in fits]))
-    rows.append(("Location",            [fit.loc for fit in fits]))
-    rows.append(("Scale",               [fit.scale for fit in fits]))
+    rows.append(("LL Verdict",          ll_verdict))
 
     return rows
 

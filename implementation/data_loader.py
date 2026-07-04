@@ -13,7 +13,7 @@ from file_loader import FileLoader, CsvFileLoader, ExcelFileLoader
 class ParticleSizesData:
     """Aggregated particle size data from one or more sources.
 
-    counts maps each source name (filename or 'input_N') to the number of
+    `counts` maps each source name (filename or 'input_N') to the number of
     measurements contributed by that source.
     """
     sizes: np.ndarray
@@ -23,6 +23,7 @@ class ParticleSizesData:
 
 class DataLoader(ABC):
     """Abstract base class for all particle-size data loaders."""
+
     @abstractmethod
     def load_data(self) -> ParticleSizesData | None:
         pass
@@ -30,11 +31,13 @@ class DataLoader(ABC):
 
 class ConsoleLoader(DataLoader):
     """Reads particle sizes interactively from stdin, grouped by separator tokens."""
-    def __init__(self, separator: str, end_of_input: str):
-        self.separator = separator
-        self.end_of_input = end_of_input
 
-    def _print_user_instructions(self):
+    def __init__(self, separator: str, end_of_input: str) -> None:
+        self.separator :str = separator
+        self.end_of_input :str = end_of_input
+
+
+    def _print_user_instructions(self) -> None:
         print("Please enter the sizes of particles (one size per line).")
         print("You can use either '.' or ',' for decimals (e.g. 12.5 or 12,5).")
         print()
@@ -50,10 +53,10 @@ class ConsoleLoader(DataLoader):
         sizes: list[float] = []
         counts :dict[str, int] = {}
 
-        count = 0       # measurements in the current group
-        input_number = 1
+        count :int = 0       # measurements in the current group
+        input_number :int = 1
 
-        input_line = input().strip()
+        input_line :str = input().strip()
         while input_line != self.end_of_input:
             if input_line == self.separator:
                 # commit the current group and start a new one
@@ -63,7 +66,7 @@ class ConsoleLoader(DataLoader):
 
             else:
                 try:
-                    size = float(input_line.replace(',', '.'))
+                    size :float = float(input_line.replace(',', '.'))
                     sizes.append(size)
                     count += 1
                 except ValueError:
@@ -77,16 +80,18 @@ class ConsoleLoader(DataLoader):
 
 class DirectoryLoader(DataLoader):
     """Abstract base class for data loaders that recursively read from a directory."""
-    def __init__(self, directory_path: Path, particle_column_name: str = "Length", particle_column_index: int = -1):
-        self.directory_path : Path = directory_path
-        self.particle_column_name : str = particle_column_name
-        self.particle_column_index : int = particle_column_index
+
+
+    def __init__(self, directory_path: Path, particle_column_name: str = "Length", particle_column_index: int = -1) -> None:
+        self.directory_path :Path = directory_path
+        self.particle_column_name :str = particle_column_name
+        self.particle_column_index :int = particle_column_index
         self.file_paths :list[Path]= []
 
         for p in self.directory_path.rglob("*"):
             if p.suffix.lower() in ['.csv', '.xlsx', '.xls']:
                 self.file_paths.append(p)
-    
+
 
     def _create_loader(self, file_path: Path) -> FileLoader:
         """Factory method to create the appropriate loader based on file extension."""
@@ -106,9 +111,9 @@ class DirectoryLoader(DataLoader):
         invalid_files : list[str] = []
 
         for path in self.file_paths:
-            file_loader = self._create_loader(path)
+            file_loader :FileLoader = self._create_loader(path)
             try:
-                particle_sizes = file_loader.load_data()
+                particle_sizes :np.ndarray | None = file_loader.load_data()
                 if particle_sizes is not None:
                     # flatten guards against unexpected 2-D arrays from multi-column CSVs
                     sizes.extend(particle_sizes.flatten())
@@ -120,7 +125,7 @@ class DirectoryLoader(DataLoader):
 
         # raise rather than silently return partial data — the user must fix broken files
         if (invalid_count := len(invalid_files)) > 0:
-            message = (
+            message :str = (
                 f"{invalid_count} file(s) could not be loaded and were skipped: "
                 f"{', '.join(invalid_files)}. Please fix these files and rerun the application."
             )
@@ -128,9 +133,8 @@ class DirectoryLoader(DataLoader):
             raise AppError(message)
 
         elif (len(sizes) == 0):
-            message = "No valid particle size measurements were found in the provided files."
+            message :str = "No valid particle size measurements were found in the provided files."
             logging.error(message)
             raise EmptyMeasurementsError(self.directory_path)
 
         return ParticleSizesData(sizes=np.array(sizes), counts=counts, total_count=len(sizes))
-

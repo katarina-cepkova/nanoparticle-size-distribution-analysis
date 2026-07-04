@@ -5,6 +5,7 @@ import logging
 
 from domain_errors import InvalidInputError
 
+
 @dataclass
 class MomentsResult:
     mean: float       # μ (mu) - arithmetic mean of the data
@@ -15,13 +16,13 @@ class MomentsResult:
     median: float     # median - middle value of sorted data (robust to outliers)
     PDI: float        # polydispersity index - measure of size distribution width/uniformity
     D32: float        # Sauter mean diameter - sum(d^3) / sum(d^2), surface-area-weighted mean size
-    
+
 
 def compute_moments(data: np.ndarray) -> MomentsResult:
     mean : float = float(np.mean(data))                     # μ
 
     if (mean == 0):  # only if we have positive and negative values - particles cannot have negative size = invalid input
-        er = InvalidInputError("Mean of the data is zero, cannot compute coefficient of variation or PDI.")
+        er :InvalidInputError = InvalidInputError("Mean of the data is zero, cannot compute coefficient of variation or PDI.")
         logging.error(er.message)
         raise er
 

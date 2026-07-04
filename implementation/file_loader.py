@@ -17,15 +17,19 @@ from domain_errors import InvalidFileFormatError, MissingColumnError, EmptyMeasu
 
 class FileLoader(ABC):
     """Abstract base class for data loaders that read from a single file."""
+
     @abstractmethod
     def load_data(self) -> np.ndarray | None:
         pass
 
+
 class CsvFileLoader(FileLoader):
     """Loads particle sizes from a single CSV file."""
-    def __init__(self, input_file: Path, particle_column_name: str):
+
+    def __init__(self, input_file: Path, particle_column_name: str) -> None:
         self.input_file :Path = input_file
         self.particle_column_name :str = particle_column_name
+
 
     def _load_csv_to_dataframe(self) -> pd.DataFrame:
         """Loads a local CSV file into a Pandas DataFrame."""
@@ -81,7 +85,7 @@ class CsvFileLoader(FileLoader):
             return None
         
         except KeyError as e:
-            er = MissingColumnError(self.particle_column_name, self.input_file)
+            er :MissingColumnError = MissingColumnError(self.particle_column_name, self.input_file)
             logging.error(er.message)
             raise er from e
         
@@ -95,16 +99,18 @@ class CsvFileLoader(FileLoader):
 
 class ExcelFileLoader(FileLoader):
     """Loads particle sizes from a single XLSX file."""
-    def __init__(self, input_file: Path, particle_column_index: int):
+
+    def __init__(self, input_file: Path, particle_column_index: int) -> None:
         self.input_file : Path = input_file
         self.particle_column_index : int = particle_column_index
+
 
     def _load_excel_to_dataframe(self) -> pd.DataFrame:
         """Reads an .xlsx file and returns a DataFrame."""
         try:
             # pd.read_excel uses openpyxl engine by default for .xlsx files
             # The header=None argument ensures that the first row is treated as data, not column names.
-            df = pd.read_excel(self.input_file, header=None)
+            df :pd.DataFrame = pd.read_excel(self.input_file, header=None)
             return df
 
         except FileNotFoundError:
@@ -151,7 +157,7 @@ class ExcelFileLoader(FileLoader):
             return None
 
         except IndexError as e:
-            er = MissingColumnError("\"last column\"", self.input_file)
+            er :MissingColumnError = MissingColumnError("\"last column\"", self.input_file)
             logging.error(er.message)
             raise er from e
         

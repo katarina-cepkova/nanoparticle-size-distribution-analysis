@@ -5,6 +5,7 @@ from typing import cast
 import logging
 from domain_errors import InvalidInputError
 
+
 @dataclass
 class FitResult:
     distribution: str
@@ -32,17 +33,17 @@ def fit_lognormal(data: np.ndarray) -> FitResult:
     theoretical_mode :float = float(np.exp(mu_hat - sigma_hat**2))  # theoretical_mode of log-normal: exp(mu - sigma^2)
     
     if theoretical_mode == 0:
-        er = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
+        er :InvalidInputError = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
         logging.error(er.message)
         raise er
     
-    theoretical_median = float(stats.lognorm.median(sigma_hat, loc=0, scale=scale))
-    theoretical_mean = cast(float,stats.lognorm.mean(sigma_hat, loc=0, scale=scale))
-    peak_height = stats.lognorm.pdf(theoretical_mode, sigma_hat, loc=0, scale=scale)
-    half_max = peak_height / 2
+    theoretical_median :float = float(stats.lognorm.median(sigma_hat, loc=0, scale=scale))
+    theoretical_mean :float = cast(float,stats.lognorm.mean(sigma_hat, loc=0, scale=scale))
+    peak_height :float = cast(float, stats.lognorm.pdf(theoretical_mode, sigma_hat, loc=0, scale=scale))
+    half_max :float = peak_height / 2
 
-    def shifted_pdf(x):
-        return stats.lognorm.pdf(x, sigma_hat, loc=0, scale=scale) - half_max
+    def shifted_pdf(x: float) -> float:
+        return cast(float, stats.lognorm.pdf(x, sigma_hat, loc=0, scale=scale) - half_max)
 
     # brentq - without fulll_output = True - it returns only the root
     # left root: search between a tiny positive number and the theoretical_mode
@@ -78,14 +79,13 @@ def fit_normal(data: np.ndarray) -> FitResult:
     theoretical_mode :float = float(mu_hat)  # theoretical_mode of normal distribution is the mean
 
     if theoretical_mode == 0:
-        er = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
+        er :InvalidInputError = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
         logging.error(er.message)
         raise er
-    theoretical_median = float(stats.norm.median(loc=mu_hat, scale=sigma_hat))
-    theoretical_mean = cast(float, stats.norm.mean(loc=mu_hat, scale=sigma_hat))
+    theoretical_median :float = float(stats.norm.median(loc=mu_hat, scale=sigma_hat))
+    theoretical_mean :float = cast(float, stats.norm.mean(loc=mu_hat, scale=sigma_hat))
     fwhm :float = float(2 * np.sqrt(2 * np.log(2)) * sigma_hat)  # FWHM = 2*sqrt(2*ln(2))*sigma
     rel_fwhm :float = fwhm / theoretical_mode
-
 
     return FitResult(
         distribution="normal",
@@ -112,12 +112,12 @@ def fit_lorentzian(data: np.ndarray) -> FitResult:
     theoretical_mode: float = float(x0_hat)  # theoretical_mode of Cauchy distribution is the peak position
 
     if theoretical_mode == 0:
-        er = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
+        er :InvalidInputError = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
         logging.error(er.message)
         raise er
     
-    theoretical_median = float(stats.cauchy.median(loc=x0_hat, scale=gamma_hat))
-    theoretical_mean = None
+    theoretical_median :float = float(stats.cauchy.median(loc=x0_hat, scale=gamma_hat))
+    theoretical_mean :float | None = None
     fwhm: float = float(2 * gamma_hat)
     rel_fwhm : float = fwhm / theoretical_mode
 
@@ -133,7 +133,3 @@ def fit_lorentzian(data: np.ndarray) -> FitResult:
         loc=float(x0_hat),
         scale=float(gamma_hat)
     )
-
-
-
- 

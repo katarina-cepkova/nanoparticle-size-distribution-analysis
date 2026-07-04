@@ -4,19 +4,21 @@ import sys
 
 from domain_errors import AppError
 from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
+
 from configuration import initialize_application
 from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX, INPUT_DATA_PATH, OUTPUT_DATA_PATH, DECIMAL_PLACES, ALPHA
+
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
 from ks_test import KSTestResult, compute_ks_test
+
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter
-# A single labelled row of per-distribution values in a comparison table, e.g. ("Mu", [1.2, None, 3.4]).
 
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
-    parser = argparse.ArgumentParser(description="Nanoparticle size distribution analysis tool")
+    parser :argparse.ArgumentParser = argparse.ArgumentParser(description="Nanoparticle size distribution analysis tool")
     parser.add_argument(
         "--source",
         choices=["console", "file"],
@@ -33,15 +35,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-
-
-def main():
+def main() -> None:
     """Entry point: initialises the app, selects a data loader, and prints statistical results."""
     initialize_application()
-    args = parse_args()
+    args :argparse.Namespace = parse_args()
 
     if args.source == "console":
-        data_loader = ConsoleLoader(SEPARATOR, END_OF_INPUT)
+        data_loader :ConsoleLoader | DirectoryLoader = ConsoleLoader(SEPARATOR, END_OF_INPUT)
     else:  # args.source == "file"
         data_loader = DirectoryLoader(INPUT_DATA_PATH, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX)
     

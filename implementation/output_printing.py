@@ -9,18 +9,18 @@ from printer import Printer
 # one labelled table row: a metric name plus its value for each fit/distribution
 Row = tuple[str, list[float | str | None]]
 # every distribution-specific parameter name that can appear in a fit's `params` dict
-PARAM_KEYS = ["mu", "sigma", "x0", "gamma"]
+PARAM_KEYS :list[str] = ["mu", "sigma", "x0", "gamma"]
 
 
 def print_section_header(printer: Printer, title: str, length: int = 60) -> None:
     """Prints a section header with a title and separator lines."""
 
-    title_length = len(title)
+    title_length :int = len(title)
     if title_length > length:
         length = title_length + 4  # Adjust length to accommodate the title with padding
     # split the padding left/right so the title sits centered within `length`
-    left_padding = (length - title_length) // 2
-    right_padding = length - title_length - left_padding
+    left_padding :int = (length - title_length) // 2
+    right_padding :int = length - title_length - left_padding
     printer.print()
     printer.print()
     printer.print(' ' * left_padding + title + ' ' * right_padding)
@@ -35,8 +35,8 @@ def print_measurement_summary(printer: Printer, data: ParticleSizesData) -> None
     print_section_header(printer, "MEASUREMENT SUMMARY")
 
     sorted_counts :list[tuple[str, int]] = sorted(data.counts.items())
-    max_filename_length = max(len(name) for name in data.counts)
-    max_filename_length = max(max_filename_length+5, 30)  # +5 padding, floor of 30 for short names
+    max_filename_length :int = max(len(name) for name in data.counts)
+    max_filename_length :int = max(max_filename_length+5, 30)  # +5 padding, floor of 30 for short names
     # print header
     printer.print(f"{'File/image':<{max_filename_length}}|{'Count':>10}")
     printer.print('-'*(max_filename_length + 11))
@@ -56,31 +56,34 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
     """
     print_section_header(printer, "STATISTICAL MOMENTS")
 
-    rows = [
+    rows :list[tuple[str, float | None]] = [
         # central tendency — different ways of describing the "typical" particle size
         ("Mean (μ)", moments.mean),
         ("Median", moments.median),
         ("Sauter mean diameter (D32)", moments.D32),
-
+        ("", None),
         # spread — absolute measures of variability (same units as the data / squared units)
         ("Variance (σ²)", moments.variance),
         ("Standard Deviation (σ)", moments.std),
-
+        ("", None),
         # spread — relative/dimensionless measures of variability (PDI = CV²)
         ("Coefficient of Variation (CV)", moments.cv),
         ("Polydispersity Index (PDI)", moments.PDI),
-
+        ("", None),
         # shape — asymmetry of the distribution
         ("Skewness", moments.skewness)
     ]
 
-    label_width = max(len(label) for label, _ in rows)
-    value_width = 10
+    label_width :int = max(len(label) for label, _ in rows)
+    value_width :int = 10
 
     printer.print(f"{'Metric':<{label_width}} | {'Value':>{value_width}}")
     printer.print(f"{'-' * (label_width + value_width + 3)}")
     for label, value in rows:
-        printer.print(f"{label:<{label_width}} | {value:>{value_width}.{DECIMAL_PLACES}f}")
+        if value is None:
+            printer.print()
+        else:
+            printer.print(f"{label:<{label_width}} | {value:>{value_width}.{DECIMAL_PLACES}f}")
     printer.print(f"{'-' * (label_width + value_width + 3)}")
 
 
@@ -93,7 +96,7 @@ def print_row(printer: Printer, label: str, values: list[float | str | None], co
     - None  -> printed as a blank cell (e.g. a parameter that doesn't apply
       to a given distribution, like "x0" for a normal fit)
     """
-    cells = []
+    cells :list[str] = []
     for val in values:
         if isinstance(val, float):
             cells.append(f"{val:>{col_width}.{DECIMAL_PLACES}f}")
@@ -112,8 +115,8 @@ def get_table_widths(fits: list[FitResult], rows: list[Row]) -> tuple[int, int]:
     DECIMAL_PLACES from .env) across all rows, so a large log-likelihood like
     -123456.789012 still fits without hardcoding an assumed width.
     """
-    col_names = [fit.distribution.capitalize() for fit in fits]
-    label_width = max(len(label) for label, _ in rows)
+    col_names :list[str] = [fit.distribution.capitalize() for fit in fits]
+    label_width :int = max(len(label) for label, _ in rows)
     label_width = max(label_width, len("Metric"))
 
     # collect only the numeric values to find the largest magnitude, then measure
@@ -128,11 +131,11 @@ def get_table_widths(fits: list[FitResult], rows: list[Row]) -> tuple[int, int]:
                 # signed_widest so we reserve space for the "-" sign in the table
                 signed_widest = min(signed_widest, v)
 
-    max_value_width = len(f"{signed_widest:.{DECIMAL_PLACES}f}")
-    
+    max_value_width :int = len(f"{signed_widest:.{DECIMAL_PLACES}f}")
+
     # separately track the widest text cell (e.g. verdicts like "REJECTED"),
     # since text values aren't formatted with DECIMAL_PLACES like numbers are
-    max_text_width = 0
+    max_text_width :int = 0
     for label, values in rows:
         for v in values:
             if isinstance(v, str):
@@ -140,7 +143,7 @@ def get_table_widths(fits: list[FitResult], rows: list[Row]) -> tuple[int, int]:
         if isinstance(label, str):
             max_text_width = max(max_text_width, len(label))
 
-    col_width = max(max_value_width, max_text_width, 12)
+    col_width :int = max(max_value_width, max_text_width, 12)
 
     # also make sure the column is wide enough for the distribution name itself
     # (e.g. "Lognormal" is longer than most single formatted values)
@@ -157,9 +160,9 @@ def print_table_header(printer: Printer, fits: list[FitResult], label_width: int
     """
     col_names :list[str] = [fit.distribution.capitalize() for fit in fits]
     distribution_names :list[str] = [f"{name:>{col_width}}" for name in col_names]
-    header = f"{'Metric':<{label_width}} | " + " | ".join(distribution_names)
+    header :str = f"{'Metric':<{label_width}} | " + " | ".join(distribution_names)
     printer.print(header)
-    header_width = len(header)
+    header_width :int = len(header)
     printer.print('-' * header_width)
     return header_width
 
@@ -172,9 +175,9 @@ def print_grouped_distribution_table(printer: Printer, fits: list[FitResult], ro
     Widths are computed once across all groups so everything lines up under a
     single shared header.
     """
-    all_rows = [row for group in row_groups for row in group]
+    all_rows :list[Row] = [row for group in row_groups for row in group]
     label_width, col_width = get_table_widths(fits, all_rows)
-    header_width = print_table_header(printer, fits, label_width, col_width)
+    header_width :int = print_table_header(printer, fits, label_width, col_width)
 
     for group in row_groups:
         for label, values in group:
@@ -211,7 +214,6 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
     # mark whichever fit has the highest log-likelihood as the best-fitting distribution
     best_log_likelihood :float = max(fit.log_likelihood for fit in fits)
     ll_verdict :list[float | str | None]  = ["BEST" if fit.log_likelihood == best_log_likelihood else "" for fit in fits]
-
     rows.append(("LL Verdict",          ll_verdict))
 
     return rows

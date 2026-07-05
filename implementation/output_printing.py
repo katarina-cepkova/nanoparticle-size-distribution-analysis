@@ -1,13 +1,13 @@
-from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
+from data_loader import ParticleSizesData
 from configuration import DECIMAL_PLACES, ALPHA
-from moments import compute_moments, MomentsResult
-from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
-from ks_test import KSTestResult, compute_ks_test
+from moments import MomentsResult
+from fitting import FitResult
+from ks_test import KSTestResult
 from printer import Printer
-
+from histogram import HistogramResult
 
 # one labelled table row: a metric name plus its value for each fit/distribution
-Row = tuple[str, list[float | str | None]]
+Row = tuple[str, list[float | int | str | None]]
 # every distribution-specific parameter name that can appear in a fit's `params` dict
 PARAM_KEYS :list[str] = ["mu", "sigma", "x0", "gamma"]
 
@@ -146,8 +146,6 @@ def get_table_widths(fits: list[FitResult], rows: list[Row]) -> tuple[int, int]:
         for v in values:
             if isinstance(v, str):
                 max_text_width = max(max_text_width, len(v))
-        if isinstance(label, str):
-            max_text_width = max(max_text_width, len(label))
 
     col_width :int = max(max_value_width, max_text_width, 12)
 
@@ -227,7 +225,7 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
     rows.append(("Theoretical mean",    [fit.theoretical_mean for fit in fits]))
     rows.append(("Theoretical median",  [fit.theoretical_median for fit in fits]))
     rows.append(("Theoretical mode",    [fit.theoretical_mode for fit in fits]))
-    rows.append(("Theoretical std",     [fit.theoretical_std for fit in fits]))
+    rows.append(("Theoretical Std",     [fit.theoretical_std for fit in fits]))
     rows.append(("Theoretical CV",     [fit.theoretical_cv for fit in fits]))
     rows.append(("Theoretical PDI",     [fit.theoretical_pdi for fit in fits]))
     rows.append(("FWHM",                [fit.fwhm for fit in fits]))

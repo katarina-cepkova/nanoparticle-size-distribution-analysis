@@ -284,26 +284,43 @@ def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: 
     print_grouped_distribution_table(printer, fits, [fit_rows, ks_rows])
 
 
-# def print_histogram_summary(printer: Printer, histogram: HistogramResult) -> None:
-#     """
-#     Prints bin count, empirical mode, and the full bin-by-bin breakdown
-#     (size range -> particle count) in one simple Metric | Value table.
-#     """
-#     rows :list[Row] = [
-#         ("Bin count", [histogram.bin_count]),
-#         ("Empirical mode", [histogram.empirical_mode]),
-#         ("", [])
-#     ]
-#     # one row per bin, labelled by its size range — reuses the exact same
-#     for i in range(histogram.bin_count):
-#         left :float = float(histogram.bin_edges[i])
-#         right :float = float(histogram.bin_edges[i+1])
-#         closing_bracket :str
-#         if i == histogram.bin_count - 1:
-#             closing_bracket = "]"
-#         else:
-#             closing_bracket = ")"
-#         interval :str = f"[{left:.{DECIMAL_PLACES}f}; {right:.{DECIMAL_PLACES}f}{closing_bracket}"
-#         rows.append((interval, [int(histogram.bin_counts[i])]))
-    
+def print_histogram_summary(printer: Printer, histogram: HistogramResult) -> None:
+    """
+    Prints bin count, empirical mode, and the full bin-by-bin breakdown
+    (size range -> particle count) in one simple Metric | Value table.
+    """
+    bin_rows :list[Row] = []
+    for i in range(histogram.bin_count):
+        left :float = float(histogram.bin_edges[i])
+        right :float = float(histogram.bin_edges[i+1])
+        closing_bracket :str
+        if i == histogram.bin_count - 1:
+            closing_bracket = "]"
+        else:
+            closing_bracket = ")"
+        interval :str = f"[{left:.{DECIMAL_PLACES}f}; {right:.{DECIMAL_PLACES}f}{closing_bracket}"
+        bin_rows.append((interval, [int(histogram.bin_counts[i])]))
 
+    row_groups :list[list[Row]] = [
+        [
+            ("Bin count", [histogram.bin_count]),
+            ("Empirical mode", [histogram.empirical_mode]),
+        ],
+        bin_rows,
+    ]
+    all_rows :list[Row] = [row for group in row_groups for row in group]
+
+    col_names :list[str] = ["Value"]
+    label_width, col_width = get_table_widths(col_names, all_rows)
+    header :str = build_table_header_string(col_names, label_width, col_width)
+    header_width :int = len(header)
+
+    print_section_header(printer, "HISTOGRAM SUMMARY", header_width)
+    print_table_header(printer, header)
+
+    for i, group in enumerate(row_groups):
+        for label, values in group:
+            print_row(printer, label, values, col_width, label_width)
+        if i < len(row_groups) - 1:
+            printer.print()  # blank separator between groups of related rows
+    printer.print('-' * header_width)

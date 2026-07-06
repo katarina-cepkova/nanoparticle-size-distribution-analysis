@@ -6,13 +6,16 @@ from domain_errors import AppError
 from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
 
 from configuration import initialize_application
-from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX, INPUT_DATA_PATH, OUTPUT_DATA_PATH, DECIMAL_PLACES, ALPHA
+from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX
+from configuration import INPUT_DATA_PATH, OUTPUT_DATA_PATH
+from configuration import DECIMAL_PLACES, ALPHA, BIN_WIDTH_IN_NM
 
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
 from ks_test import KSTestResult, compute_ks_test
+from histogram import HistogramResult, compute_histogram
 
-from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
+from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table, print_histogram_summary
 from printer import Printer, FilePrinter, ConsolePrinter
 
 
@@ -64,6 +67,9 @@ def main() -> None:
 
         ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
         print_fit_and_ks_table(printer, fits, ks_results)
+
+        histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM)
+        print_histogram_summary(printer, histogram)
 
     except AppError as e:
         print(f"Error: {e.message}")

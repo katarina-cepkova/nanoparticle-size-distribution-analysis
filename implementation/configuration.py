@@ -21,6 +21,7 @@ LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 
 DECIMAL_PLACES :int = int(os.getenv('DECIMAL_PLACES', 6))
 ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
+BIN_WIDTH_IN_NM : float = float(os.getenv('BIN_WIDTH', 0.25))
 
 
 def _setup_directories() -> None:

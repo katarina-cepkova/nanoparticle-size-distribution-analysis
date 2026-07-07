@@ -22,6 +22,11 @@ def bin_edges_from_width(data: np.ndarray, bin_width: float) -> np.ndarray:
     return np.arange(min, max+bin_width, bin_width)
 
 
+def compute_max_bin_width(data: np.ndarray) -> float:
+    max :float = float(np.max(data))
+    return max
+
+
 def compute_histogram(data: np.ndarray, bin_width: float) -> HistogramResult:
     """Bin the data into a histogram and derive the empirical mode from it."""
 

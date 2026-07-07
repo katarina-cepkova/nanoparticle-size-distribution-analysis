@@ -4,6 +4,7 @@ import os
 import logging
 from logging import Logger, StreamHandler, FileHandler
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # loading environment variables regardless of the current working directory
@@ -20,6 +21,7 @@ OUTPUT_DATA_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/outp
 LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 
 DECIMAL_PLACES :int = int(os.getenv('DECIMAL_PLACES', 6))
+PERCENTAGE_DECIMAL_PLACES :int = int(os.getenv('PERCENTAGE_DECIMAL_PLACES', 2))
 ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
 BIN_WIDTH_IN_NM : float = float(os.getenv('BIN_WIDTH', 0.25))
 

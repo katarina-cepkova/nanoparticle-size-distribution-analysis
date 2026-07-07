@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import logging
 from logging import Logger, StreamHandler, FileHandler
+import flask.cli
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +59,9 @@ def _setup_logging() -> None:
     file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)   
     logger.addHandler(file_handler)
+
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    flask.cli.show_server_banner = lambda *args: None
 
 
 def initialize_application() -> None:

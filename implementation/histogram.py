@@ -32,7 +32,7 @@ def compute_max_bin_width(data: np.ndarray) -> float:
 def compute_marks(max_bin_width: float) -> dict[float, str]:
     marks :dict[float, str] = {}
     for v in np.arange(0, max_bin_width+BIN_WIDTH_IN_NM, BIN_WIDTH_IN_NM):
-        marks[round(v,2)] = str(round(v,2))
+        marks[float(round(v,2))] = str(round(v,2))
     
     return marks
 

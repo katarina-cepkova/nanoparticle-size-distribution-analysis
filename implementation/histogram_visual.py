@@ -1,17 +1,15 @@
 import plotly.graph_objects as go
 from plotly.graph_objects import Figure, Bar
 from histogram import HistogramResult
-from colors import DARK_AXIS_COLOR
+from colors import DARK_AXIS_COLOR, BG_COLOR
 from font_sizes import DEFAULT_FONT_SIZE, AXIS_TITLE_FONT_SIZE, AXIS_TICK_FONT_SIZE
 
 
 # graph constants
 BAR_GAP_FRACTION :float = 0.05  # 5% bin width as a space
-BG_COLOR :str = "#FFFFFF"
 TICKS :str ="outside"
 TICK_LEN :int = 6
 TICK_WIDTH :int = 1
-TICK_COLOR=DARK_AXIS_COLOR
 
 FIGURE_MARGIN: dict[str, int] = dict(l=40, r=20, t=20, b=40)
 

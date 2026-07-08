@@ -6,11 +6,12 @@ from configuration import BIN_WIDTH_IN_NM
 
 @dataclass
 class HistogramResult:
-    bin_edges: np.ndarray       # bin boundaries; length is bin_count + 1
-    bin_counts: np.ndarray      # particle count per bin; length is bin_count
-    bin_count: int              # number of bins the data was split into
+    bin_edges :np.ndarray       # bin boundaries; length is bin_count + 1
+    bin_counts :np.ndarray      # particle count per bin; length is bin_count
+    bin_count :int              # number of bins the data was split into
     bin_percentages :np.ndarray # percentage of total particles falling in each bin
-    empirical_mode: float       # midpoint of the most populated bin (the histogram-based "most common" size, not a fitted-curve estimate)
+    empirical_mode :float       # midpoint of the most populated bin (the histogram-based "most common" size, not a fitted-curve estimate)
+    max_value :float            # maximum nanoparticle width
 
 
 def bin_edges_from_width(data: np.ndarray, bin_width: float) -> np.ndarray:
@@ -76,5 +77,6 @@ def compute_histogram(data: np.ndarray, bin_width: float) -> HistogramResult:
         bin_counts=bin_counts,
         bin_count=bin_count,
         bin_percentages=bin_percentages,
-        empirical_mode=empirical_mode
+        empirical_mode=empirical_mode,
+        max_value=compute_max_bin_width(data)
     )

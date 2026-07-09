@@ -45,13 +45,12 @@ def compute_nanoparticle_count(bin_counts: np.ndarray) -> int:
     return int(np.sum(bin_counts))
 
 
-def compute_bin_percentages(bin_counts: np.ndarray) -> np.ndarray:
+def compute_bin_percentages(bin_counts: np.ndarray, nanoparticle_count: int) -> np.ndarray:
     """Converts each bin's count into a percentage of the total particle count."""
-    data_size :int = compute_nanoparticle_count(bin_counts)
-    bin_percentages :np.ndarray = np.empty(data_size, dtype=np.float64)
+    bin_percentages :np.ndarray = np.empty(len(bin_counts), dtype=np.float64)
 
     for i, bin_count in enumerate(bin_counts):
-        bin_percentages[i] = bin_count / data_size * 100
+        bin_percentages[i] = bin_count / nanoparticle_count * 100
     return bin_percentages
 
 
@@ -69,7 +68,7 @@ def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nano
     # bins=<int> would ask numpy to compute that many equal-width bins;
     # bins=<ndarray> uses those exact edges, so we get back the edges we passed in.
     bin_counts, bin_edges = np.histogram(data, bins=bin_edges)
-    bin_percentages :np.ndarray = compute_bin_percentages(bin_counts)
+    bin_percentages :np.ndarray = compute_bin_percentages(bin_counts, nanoparticle_count)
 
     bin_count = len(bin_edges) - 1
     # Index of the tallest bin, i.e. the most populated size range.

@@ -1,6 +1,6 @@
 import argparse
 import sys
-
+from dash import Dash
 
 from domain_errors import AppError
 from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
@@ -13,11 +13,13 @@ from configuration import DECIMAL_PLACES, ALPHA, BIN_WIDTH_IN_NM
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
 from ks_test import KSTestResult, compute_ks_test
-from histogram import HistogramResult, compute_histogram
+from histogram import HistogramResult, compute_histogram, find_max_value, compute_nanoparticle_count
 
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table, print_histogram_summary
 from printer import Printer, FilePrinter, ConsolePrinter
 
+from histogram_visual import build_visual_histogram
+from app import build_app
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
@@ -55,7 +57,10 @@ def main() -> None:
 
     try:
         data: ParticleSizesData = data_loader.load_data()
-        print_measurement_summary(printer, data)
+        max_value :float = find_max_value(data.sizes)
+        total_nanoparticles :int = compute_nanoparticle_count(data.sizes)
+
+        print_measurement_summary(printer, data, total_nanoparticles)
 
         moments: MomentsResult = compute_moments(data.sizes)
         print_moments_summary(printer, moments)
@@ -68,8 +73,11 @@ def main() -> None:
         ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
         print_fit_and_ks_table(printer, fits, ks_results)
 
-        histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM)
-        print_histogram_summary(printer, histogram)
+        histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
+
+        app :Dash = Dash(__name__)
+        build_app(app, data.sizes, histogram)
+        app.run()
 
     except AppError as e:
         print(f"Error: {e.message}")

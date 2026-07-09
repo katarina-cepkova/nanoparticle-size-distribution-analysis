@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Figure, Bar
 from histogram import HistogramResult
 from colors import DARK_AXIS_COLOR, BG_COLOR
+from color_utils import border_style_for
 from font_sizes import DEFAULT_FONT_SIZE, AXIS_TITLE_FONT_SIZE, AXIS_TICK_FONT_SIZE
 
 
@@ -31,6 +32,7 @@ MAX_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable before esca
 
 
 def _pick_dtick(axis_min: float, axis_max: float) -> float:
+    """Picks the smallest candidate tick step that keeps the axis under MAX_TICK_COUNT ticks."""
     span: float = axis_max - axis_min
 
     for step in CANDIDATE_TICK_STEPS:
@@ -70,11 +72,15 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> Figure:
         middle :float = (left + right) / 2
         x.append(middle)
 
+    border_color, border_width = border_style_for(color)
+
     bar :Bar = go.Bar(
         x=x,
         y=histogram.bin_percentages,
         width=bin_width * (1-BAR_GAP_FRACTION),
-        marker_color=color
+        marker_color=color,
+        marker_line_color=border_color,
+        marker_line_width=border_width
     )
 
     figure.add_trace(bar)

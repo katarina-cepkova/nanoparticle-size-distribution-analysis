@@ -28,14 +28,14 @@ def print_section_header(printer: Printer, title: str, length: int = 60) -> None
     printer.print()
 
 
-def print_measurement_summary(printer: Printer, data: ParticleSizesData) -> None:
+def print_measurement_summary(printer: Printer, data: ParticleSizesData, total_nanoparticles :int) -> None:
     """
     Prints a formatted table of per-source particle counts with a total row.
     """
     sorted_counts :list[tuple[str, int]] = sorted(data.counts.items())
     row_groups :list[list[Row]] = [
         [(name, [count]) for name, count in sorted_counts],
-        [("TOTAL", [sum(data.counts.values())])]
+        [("TOTAL", [total_nanoparticles])]
     ]
     all_rows :list[Row] = [row for group in row_groups for row in group]
 
@@ -285,6 +285,7 @@ def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: 
 
 
 def compute_num_of_digits(bin_count :int) -> int:
+    """Digit width needed to print bin numbers 1..bin_count right-aligned."""
     digits :int = 0
     remaining :int = bin_count
     while remaining > 0:
@@ -316,7 +317,7 @@ def print_histogram_summary(printer: Printer, histogram: HistogramResult) -> Non
 
     row_groups :list[list[Row]] = [
         [
-            ("Nanoparticle count", [compute_nanoparticle_count(histogram.bin_counts), f"{100:.{PERCENTAGE_DECIMAL_PLACES}f}"])
+            ("Nanoparticle count", [histogram.nanoparticle_count, f"{100:.{PERCENTAGE_DECIMAL_PLACES}f}"])
         ],
         bin_rows,
     ]

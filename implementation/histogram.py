@@ -12,6 +12,7 @@ class HistogramResult:
     bin_percentages :np.ndarray # percentage of total particles falling in each bin
     empirical_mode :float       # midpoint of the most populated bin (the histogram-based "most common" size, not a fitted-curve estimate)
     max_value :float            # maximum nanoparticle width
+    nanoparticle_count :int     # number of nanoparticles
 
 
 def bin_edges_from_width(data: np.ndarray, bin_width: float) -> np.ndarray:
@@ -24,12 +25,14 @@ def bin_edges_from_width(data: np.ndarray, bin_width: float) -> np.ndarray:
     return np.arange(min, max+bin_width, bin_width)
 
 
-def compute_max_bin_width(data: np.ndarray) -> float:
+def find_max_value(data: np.ndarray) -> float:
+    """Returns the largest particle size in the data."""
     max :float = float(np.max(data))
     return max
 
 
 def compute_marks(max_bin_width: float) -> dict[float, str]:
+    """Builds slider marks at every bin-width step from 0 up to max_bin_width."""
     marks :dict[float, str] = {}
     for v in np.arange(0, max_bin_width+BIN_WIDTH_IN_NM, BIN_WIDTH_IN_NM):
         marks[float(round(v,2))] = str(round(v,2))
@@ -38,10 +41,12 @@ def compute_marks(max_bin_width: float) -> dict[float, str]:
 
 
 def compute_nanoparticle_count(bin_counts: np.ndarray) -> int:
+    """Total number of particles across all bins."""
     return int(np.sum(bin_counts))
 
 
 def compute_bin_percentages(bin_counts: np.ndarray) -> np.ndarray:
+    """Converts each bin's count into a percentage of the total particle count."""
     data_size :int = compute_nanoparticle_count(bin_counts)
     bin_percentages :np.ndarray = np.empty(data_size, dtype=np.float64)
 
@@ -50,7 +55,7 @@ def compute_bin_percentages(bin_counts: np.ndarray) -> np.ndarray:
     return bin_percentages
 
 
-def compute_histogram(data: np.ndarray, bin_width: float) -> HistogramResult:
+def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nanoparticle_count: int) -> HistogramResult:
     """Bin the data into a histogram and derive the empirical mode from it."""
 
     if bin_width <= 0.0:
@@ -78,5 +83,6 @@ def compute_histogram(data: np.ndarray, bin_width: float) -> HistogramResult:
         bin_count=bin_count,
         bin_percentages=bin_percentages,
         empirical_mode=empirical_mode,
-        max_value=compute_max_bin_width(data)
+        max_value=max_value,
+        nanoparticle_count=nanoparticle_count
     )

@@ -13,7 +13,7 @@ from configuration import DECIMAL_PLACES, ALPHA, BIN_WIDTH_IN_NM
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
 from ks_test import KSTestResult, compute_ks_test
-from histogram import HistogramResult, compute_histogram, find_max_value, compute_nanoparticle_count
+from histogram import HistogramResult, compute_histogram, find_max_value
 
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table, print_histogram_summary
 from printer import Printer, FilePrinter, ConsolePrinter
@@ -58,7 +58,7 @@ def main() -> None:
     try:
         data: ParticleSizesData = data_loader.load_data()
         max_value :float = find_max_value(data.sizes)
-        total_nanoparticles :int = compute_nanoparticle_count(data.sizes)
+        total_nanoparticles :int = len(data.sizes)
 
         print_measurement_summary(printer, data, total_nanoparticles)
 

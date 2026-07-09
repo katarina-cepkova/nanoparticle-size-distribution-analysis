@@ -12,6 +12,7 @@ class HistogramResult:
     bin_percentages :np.ndarray # percentage of total particles falling in each bin
     empirical_mode :float       # midpoint of the most populated bin (the histogram-based "most common" size, not a fitted-curve estimate)
     max_value :float            # maximum nanoparticle width
+    max_percentage :float       # maximum percentage value across bins
     nanoparticle_count :int     # number of nanoparticles
 
 
@@ -31,6 +32,12 @@ def find_max_value(data: np.ndarray) -> float:
     return max
 
 
+def find_max_percentage(percentages: np.ndarray) -> float:
+    """Returns the greatest percentage value across bins."""
+    max :float = float(np.max(percentages))
+    return max
+
+
 def compute_marks(max_bin_width: float) -> dict[float, str]:
     """Builds slider marks at every bin-width step from 0 up to max_bin_width."""
     marks :dict[float, str] = {}
@@ -38,11 +45,6 @@ def compute_marks(max_bin_width: float) -> dict[float, str]:
         marks[float(round(v,2))] = str(round(v,2))
     
     return marks
-
-
-def compute_nanoparticle_count(bin_counts: np.ndarray) -> int:
-    """Total number of particles across all bins."""
-    return int(np.sum(bin_counts))
 
 
 def compute_bin_percentages(bin_counts: np.ndarray, nanoparticle_count: int) -> np.ndarray:
@@ -69,6 +71,7 @@ def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nano
     # bins=<ndarray> uses those exact edges, so we get back the edges we passed in.
     bin_counts, bin_edges = np.histogram(data, bins=bin_edges)
     bin_percentages :np.ndarray = compute_bin_percentages(bin_counts, nanoparticle_count)
+    max_percentage :float = find_max_percentage(bin_percentages)
 
     bin_count = len(bin_edges) - 1
     # Index of the tallest bin, i.e. the most populated size range.
@@ -83,5 +86,6 @@ def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nano
         bin_percentages=bin_percentages,
         empirical_mode=empirical_mode,
         max_value=max_value,
+        max_percentage=max_percentage,
         nanoparticle_count=nanoparticle_count
     )

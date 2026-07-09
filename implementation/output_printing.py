@@ -4,7 +4,7 @@ from moments import MomentsResult
 from fitting import FitResult
 from ks_test import KSTestResult
 from printer import Printer
-from histogram import HistogramResult, compute_nanoparticle_count
+from histogram import HistogramResult
 
 # one labelled table row: a row label plus one value per column
 Row = tuple[str, list[float | int | str | None]]

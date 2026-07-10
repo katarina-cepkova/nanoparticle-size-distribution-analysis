@@ -10,7 +10,7 @@ import math
 from typing import Any
 
 from histogram import HistogramResult, compute_marks, compute_histogram
-from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick
+from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
 from configuration import BIN_WIDTH_IN_NM
 
@@ -219,6 +219,10 @@ def _build_slider(max_value: float) -> dcc.Slider:
 
 def _build_layout(initial_histogram: HistogramResult) -> html.Div:
     """Builds the page layout (graph, button panel, bin-width slider)."""
+
+    _, initial_x_max = compute_nice_x_axis(X_AXIS_TICK0, initial_histogram.max_value)
+    _, initial_y_max = compute_nice_y_axis(Y_AXIS_TICK0, initial_histogram.max_percentage)
+
     return html.Div(
         id="page",
         children=[
@@ -234,8 +238,15 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
                 _build_slider(initial_histogram.max_value),
                 style={"flex": "0 0 auto", "paddingTop": "16px"}
             ),
-            dcc.Store(id="x-axis-range", data=[X_AXIS_TICK0, math.ceil(initial_histogram.max_value)]),
-            dcc.Store(id="y-axis-range", data=[Y_AXIS_TICK0, math.ceil(initial_histogram.max_percentage)]),
+            dcc.Store(id="x-axis-range", data=[X_AXIS_TICK0, initial_x_max]),
+            dcc.Store(id="y-axis-range", data=[Y_AXIS_TICK0, initial_y_max]),
+            # holds the actual counted max_value/max_percentage, so an axis reset
+            # can rebuild a nice tick-aligned max after the bin width changes
+            dcc.Store(id="histogram-stats", data={
+                    "max_value": initial_histogram.max_value,
+                    "max_percentage": initial_histogram.max_percentage
+                }
+            )
         ],
         style={
         "backgroundColor": BG_COLOR,
@@ -258,11 +269,13 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         Output("histogram", "figure"),
         Output("x-axis-range", "data"),
         Output("y-axis-range", "data"),
+        Output("histogram-stats", "data"),
         Input("bin-width-slider", "value"),
         Input("color-picker", "data"),
         Input("histogram", "relayoutData"),
         State("x-axis-range", "data"),
         State("y-axis-range", "data"),
+        State("histogram-stats", "data")
     )
     def update_histogram(
         bin_width_slider: float,
@@ -270,9 +283,12 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         relayout_data: dict | None,
         x_range_state: list[float],
         y_range_state: list[float],
-    ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any]:
+        histogram_stats: dict[str, float]
+    ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any, dict[str, float] | Any]:
         # state: x/y-axis-range stores carry the last-seen range so a relayout
         # event (which only reports the axis that changed) can merge with it.
+        # histogram_stats carries the actual counted max_value/max_percentage,
+        # needed to rebuild a nice axis on reset after the bin width changes.
 
         # case: color change -> patch marker color only, ranges untouched
         if ctx.triggered_id == "color-picker":
@@ -281,13 +297,13 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             border_color, border_width = border_style_for(color)
             patched["data"][0]["marker"]["line"]["color"] = border_color
             patched["data"][0]["marker"]["line"]["width"] = border_width
-            return patched, dash.no_update, dash.no_update
+            return patched, dash.no_update, dash.no_update, dash.no_update
 
         # case: pan/zoom/reset -> patch only the axis/axes relayout_data reports
         if ctx.triggered_id == "histogram":
             if not relayout_data:
                 raise PreventUpdate
-
+            print(relayout_data)
             patched = Patch()
             updated = False
             x_min, x_max = x_range_state
@@ -300,10 +316,14 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
                 patched["layout"]["xaxis"]["dtick"] = pick_x_dtick(x_min, x_max)
                 updated = True
             elif relayout_data.get("xaxis.autorange"):
-                # x reset
-                x_min, x_max = X_AXIS_TICK0, initial_histogram.max_value
-                patched["layout"]["xaxis"]["dtick"] = pick_x_dtick(x_min, x_max)
-                patched["layout"]["xaxis"]["range"] = None
+                # x reset: recompute a tick-aligned max from the counted stats,
+                # and pin range/tickmode explicitly (autorange wouldn't be nice)
+                x_min = X_AXIS_TICK0
+                (x_dtick, x_max) = compute_nice_x_axis(X_AXIS_TICK0, histogram_stats["max_value"])
+                patched["layout"]["xaxis"]["tickmode"] = "linear"
+                patched["layout"]["xaxis"]["range"] = [x_min, x_max]
+                patched["layout"]["xaxis"]["dtick"] = x_dtick
+                patched["layout"]["xaxis"]["autorange"] = False
                 updated = True
 
             if "yaxis.range[0]" in relayout_data or "yaxis.range[1]" in relayout_data:
@@ -314,18 +334,30 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
                 patched["layout"]["yaxis"]["range"] = [y_min, y_max]
                 updated = True
             elif relayout_data.get("yaxis.autorange"):
-                # y reset
-                y_min, y_max = Y_AXIS_TICK0, math.ceil(initial_histogram.max_percentage)
-                patched["layout"]["yaxis"]["dtick"] = pick_y_dtick(y_min, y_max)
-                patched["layout"]["yaxis"]["range"] = None
+                # y reset: same as x reset above
+                y_min = Y_AXIS_TICK0
+                (y_dtick, y_max) = compute_nice_y_axis(Y_AXIS_TICK0, histogram_stats["max_percentage"])
+                patched["layout"]["yaxis"]["tickmode"] = "linear"
+                patched["layout"]["yaxis"]["range"] = [y_min, y_max]
+                patched["layout"]["yaxis"]["dtick"] = y_dtick
+                patched["layout"]["yaxis"]["autorange"] = False
                 updated = True
 
             if not updated:
                 raise PreventUpdate  # untracked relayout event, nothing to patch
 
-            return patched, [x_min, x_max], [y_min, y_max]
+            return patched, [x_min, x_max], [y_min, y_max], dash.no_update
 
         # case: bin-width slider change or initial load -> full rebuild
         histogram = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
-        figure = build_visual_histogram(histogram, color)
-        return figure, [X_AXIS_TICK0, initial_histogram.max_value], [Y_AXIS_TICK0, math.ceil(histogram.max_percentage)]
+        figure, x_max, y_max = build_visual_histogram(histogram, color)
+        # max_value is fixed by the dataset; max_percentage depends on bin width,
+        # so it's recounted here and stored for the next axis reset
+        stats = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
+
+        return (
+            figure, 
+            [X_AXIS_TICK0, x_max], 
+            [Y_AXIS_TICK0, y_max],
+            stats
+        )

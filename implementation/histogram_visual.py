@@ -1,5 +1,7 @@
 import plotly.graph_objects as go
 from plotly.graph_objects import Figure, Bar
+import math
+
 from histogram import HistogramResult
 from colors import DARK_AXIS_COLOR, BG_COLOR
 from color_utils import border_style_for
@@ -30,7 +32,7 @@ Y_AXIS_TICKFORMAT: str = ".1f"
 Y_AXIS_HARD_MAX: float = 100.0
 
 CANDIDATE_X_TICK_STEPS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
-CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (2.5, 5, 10, 20)
+CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (0.5, 1.0, 2.0, 2.5, 5.0, 10.0, 20.0)
 MAX_X_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable on xaxis before escalating
 MAX_Y_TICK_COUNT: int = 10 
 
@@ -55,6 +57,27 @@ def pick_y_dtick(axis_min: float, axis_max: float) -> float:
     return _pick_dtick(axis_min, axis_max, CANDIDATE_Y_TICK_STEPS, MAX_Y_TICK_COUNT)
 
 
+def _round_up_to_dtick(value: float, dtick: float) -> float:
+    """Rounds value up to the nearest multiple of dtick, so the axis edge lands on a tick."""
+    return math.ceil(value / dtick) * dtick
+
+
+def compute_nice_x_axis(axis_min: float, raw_max: float) -> tuple[float, float]:
+    """Returns (dtick, rounded_max) so the x-axis edge lands exactly on a tick."""
+    raw_dtick = pick_x_dtick(axis_min, raw_max)
+    rounded_max = _round_up_to_dtick(raw_max, raw_dtick)
+    dtick = pick_x_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
+    return dtick, rounded_max
+
+
+def compute_nice_y_axis(axis_min: float, raw_max: float) -> tuple[float, float]:
+    """Returns (dtick, rounded_max) so the y-axis edge lands exactly on a tick."""
+    raw_dtick = pick_y_dtick(axis_min, raw_max)
+    rounded_max = _round_up_to_dtick(raw_max, raw_dtick)
+    dtick = pick_y_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
+    return dtick, rounded_max
+
+
 def build_base_axis() -> dict:
     """Creates an axis"""
     return dict(
@@ -72,7 +95,7 @@ def build_base_axis() -> dict:
     )
 
 
-def build_visual_histogram(histogram: HistogramResult, color: str) -> Figure:
+def build_visual_histogram(histogram: HistogramResult, color: str) -> tuple[Figure, float, float]:
     """Creates a visual histogram"""
     figure :Figure = go.Figure()
     # calculate bin width and the middle value on the x axis (bin centres)
@@ -86,6 +109,9 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> Figure:
         x.append(middle)
 
     border_color, border_width = border_style_for(color)
+    # round the axis max up to a tick so the last tick lands on the axis edge
+    x_dtick, x_max = compute_nice_x_axis(X_AXIS_TICK0, histogram.max_value)
+    y_dtick, y_max = compute_nice_y_axis(Y_AXIS_TICK0, histogram.max_percentage)
 
     bar :Bar = go.Bar(
         x=x,
@@ -109,15 +135,18 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> Figure:
             **build_base_axis(),  # ** unpacks the returned dict
             title=X_AXIS_TITLE,
             tick0=X_AXIS_TICK0,
-            dtick=pick_x_dtick(X_AXIS_TICK0, histogram.max_value),
+            range=[X_AXIS_TICK0, x_max],
+            dtick=x_dtick,
             tickformat=X_AXIS_TICKFORMAT,
         ),
 
         yaxis=dict(
             **build_base_axis(),
             title=Y_AXIS_TITLE,
-            dtick=pick_y_dtick(Y_AXIS_TICK0, histogram.max_percentage),
+            tick0=Y_AXIS_TICK0,
+            range=[Y_AXIS_TICK0, y_max],
+            dtick=y_dtick,
             tickformat=Y_AXIS_TICKFORMAT,
         )
     )
-    return figure
+    return figure, x_max, y_max

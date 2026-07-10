@@ -24,22 +24,35 @@ X_AXIS_DTICK: float = 0.25
 X_AXIS_TICKFORMAT: str = ".2f"
 
 Y_AXIS_TITLE: str = "Relative Frequency (%)"
+Y_AXIS_TICK0 :float = 0
 Y_AXIS_DTICK: float = 5
 Y_AXIS_TICKFORMAT: str = ".1f"
+Y_AXIS_HARD_MAX: float = 100.0
 
-CANDIDATE_TICK_STEPS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
-MAX_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable before escalating
+CANDIDATE_X_TICK_STEPS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
+CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (2.5, 5, 10, 20)
+MAX_X_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable on xaxis before escalating
+MAX_Y_TICK_COUNT: int = 10 
 
 
-def _pick_dtick(axis_min: float, axis_max: float) -> float:
+def _pick_dtick(axis_min: float, axis_max: float, tick_steps: tuple[float | int, ...], max_tick_count: int) -> float:
     """Picks the smallest candidate tick step that keeps the axis under MAX_TICK_COUNT ticks."""
     span: float = axis_max - axis_min
 
-    for step in CANDIDATE_TICK_STEPS:
-        if span / step <= MAX_TICK_COUNT:
+    for step in tick_steps:
+        if span / step <= max_tick_count:
             return step
 
-    return CANDIDATE_TICK_STEPS[-1]
+    return tick_steps[-1]
+
+def pick_x_dtick(axis_min: float, axis_max: float) -> float:
+    """Picks the smallest candidate tick step that keeps the x-axis under MAX_X_TICK_COUNT ticks."""
+    return _pick_dtick(axis_min, axis_max, CANDIDATE_X_TICK_STEPS, MAX_X_TICK_COUNT)
+
+
+def pick_y_dtick(axis_min: float, axis_max: float) -> float:
+    """Picks the smallest candidate tick step that keeps the y-axis under MAX_Y_TICK_COUNT ticks."""
+    return _pick_dtick(axis_min, axis_max, CANDIDATE_Y_TICK_STEPS, MAX_Y_TICK_COUNT)
 
 
 def build_base_axis() -> dict:
@@ -96,14 +109,14 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> Figure:
             **build_base_axis(),  # ** unpacks the returned dict
             title=X_AXIS_TITLE,
             tick0=X_AXIS_TICK0,
-            dtick=_pick_dtick(X_AXIS_TICK0, histogram.max_value),
+            dtick=pick_x_dtick(X_AXIS_TICK0, histogram.max_value),
             tickformat=X_AXIS_TICKFORMAT,
         ),
 
         yaxis=dict(
             **build_base_axis(),
             title=Y_AXIS_TITLE,
-            dtick=Y_AXIS_DTICK,
+            dtick=pick_y_dtick(Y_AXIS_TICK0, histogram.max_percentage),
             tickformat=Y_AXIS_TICKFORMAT,
         )
     )

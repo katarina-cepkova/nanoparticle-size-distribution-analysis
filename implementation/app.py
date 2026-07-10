@@ -1,17 +1,24 @@
-from dash import Dash, dcc, html
+from dash import Dash, dash, dcc, html, Input, Output, State, Patch, ALL, ctx
 # dcc = Dash Core Components (dcc.Graph, dcc.Slider interactive elements)
 # html = module with HTML elements
 
+from dash.exceptions import PreventUpdate
+from plotly.graph_objects import Figure
 import numpy as np
+import json
+import math
+from typing import Any
 
-from histogram import HistogramResult, compute_marks
+from histogram import HistogramResult, compute_marks, compute_histogram
+from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick
+from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
 from configuration import BIN_WIDTH_IN_NM
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR
 from colors import SAVE_PNG_BTN_COLOR, PRINT_HISTOGRAM_BTN_COLOR, CHANGE_COLOR_BTN_COLOR
 from colors import NORMAL_CURVE_COLOR, LOGNORMAL_CURVE_COLOR, LORENTZIAN_CURVE_COLOR, CURVE_INACTIVE_COLOR
-from color_utils import hex_to_rgba, text_color_with_bg_color
+from color_utils import hex_to_rgba, text_color_with_bg_color, border_style_for
 
 
 # color picker grid layout
@@ -36,7 +43,6 @@ CURVE_OPTIONS: list[tuple[str, str, str]] = [
     ("lognormal", "Lognormal", LOGNORMAL_CURVE_COLOR),
     ("lorentzian", "Lorentzian", LORENTZIAN_CURVE_COLOR),
 ]
-
 
 #region BUTTONS
 def _build_button(label: str, background_color: str, button_id: str | dict[str, str], extra_style: dict | None = None, **kwargs) -> html.Button:
@@ -227,7 +233,9 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
             html.Div(
                 _build_slider(initial_histogram.max_value),
                 style={"flex": "0 0 auto", "paddingTop": "16px"}
-            )
+            ),
+            dcc.Store(id="x-axis-range", data=[X_AXIS_TICK0, math.ceil(initial_histogram.max_value)]),
+            dcc.Store(id="y-axis-range", data=[Y_AXIS_TICK0, math.ceil(initial_histogram.max_percentage)]),
         ],
         style={
         "backgroundColor": BG_COLOR,
@@ -246,3 +254,78 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
     """Builds the page layout (graph, button panel, bin-width slider)."""
     app.layout = _build_layout(initial_histogram)
 
+    @app.callback(
+        Output("histogram", "figure"),
+        Output("x-axis-range", "data"),
+        Output("y-axis-range", "data"),
+        Input("bin-width-slider", "value"),
+        Input("color-picker", "data"),
+        Input("histogram", "relayoutData"),
+        State("x-axis-range", "data"),
+        State("y-axis-range", "data"),
+    )
+    def update_histogram(
+        bin_width_slider: float,
+        color: str,
+        relayout_data: dict | None,
+        x_range_state: list[float],
+        y_range_state: list[float],
+    ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any]:
+        # state: x/y-axis-range stores carry the last-seen range so a relayout
+        # event (which only reports the axis that changed) can merge with it.
+
+        # case: color change -> patch marker color only, ranges untouched
+        if ctx.triggered_id == "color-picker":
+            patched = Patch()
+            patched["data"][0]["marker"]["color"] = color
+            border_color, border_width = border_style_for(color)
+            patched["data"][0]["marker"]["line"]["color"] = border_color
+            patched["data"][0]["marker"]["line"]["width"] = border_width
+            return patched, dash.no_update, dash.no_update
+
+        # case: pan/zoom/reset -> patch only the axis/axes relayout_data reports
+        if ctx.triggered_id == "histogram":
+            if not relayout_data:
+                raise PreventUpdate
+
+            patched = Patch()
+            updated = False
+            x_min, x_max = x_range_state
+            y_min, y_max = y_range_state
+
+            if "xaxis.range[0]" in relayout_data or "xaxis.range[1]" in relayout_data:
+                # x zoom/pan
+                x_min = relayout_data.get("xaxis.range[0]", x_min)
+                x_max = relayout_data.get("xaxis.range[1]", x_max)
+                patched["layout"]["xaxis"]["dtick"] = pick_x_dtick(x_min, x_max)
+                updated = True
+            elif relayout_data.get("xaxis.autorange"):
+                # x reset
+                x_min, x_max = X_AXIS_TICK0, initial_histogram.max_value
+                patched["layout"]["xaxis"]["dtick"] = pick_x_dtick(x_min, x_max)
+                patched["layout"]["xaxis"]["range"] = None
+                updated = True
+
+            if "yaxis.range[0]" in relayout_data or "yaxis.range[1]" in relayout_data:
+                # y zoom/pan, capped below Y_AXIS_HARD_MAX
+                y_min = relayout_data.get("yaxis.range[0]", y_min)
+                y_max = min(relayout_data.get("yaxis.range[1]", y_max), Y_AXIS_HARD_MAX)
+                patched["layout"]["yaxis"]["dtick"] = pick_y_dtick(y_min, y_max)
+                patched["layout"]["yaxis"]["range"] = [y_min, y_max]
+                updated = True
+            elif relayout_data.get("yaxis.autorange"):
+                # y reset
+                y_min, y_max = Y_AXIS_TICK0, math.ceil(initial_histogram.max_percentage)
+                patched["layout"]["yaxis"]["dtick"] = pick_y_dtick(y_min, y_max)
+                patched["layout"]["yaxis"]["range"] = None
+                updated = True
+
+            if not updated:
+                raise PreventUpdate  # untracked relayout event, nothing to patch
+
+            return patched, [x_min, x_max], [y_min, y_max]
+
+        # case: bin-width slider change or initial load -> full rebuild
+        histogram = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
+        figure = build_visual_histogram(histogram, color)
+        return figure, [X_AXIS_TICK0, initial_histogram.max_value], [Y_AXIS_TICK0, math.ceil(histogram.max_percentage)]

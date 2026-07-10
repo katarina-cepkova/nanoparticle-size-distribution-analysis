@@ -285,6 +285,7 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         y_range_state: list[float],
         histogram_stats: dict[str, float]
     ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any, dict[str, float] | Any]:
+        """Rebuilds or patches the histogram figure for a bin-width, color, or pan/zoom/reset change."""
         # state: x/y-axis-range stores carry the last-seen range so a relayout
         # event (which only reports the axis that changed) can merge with it.
         # histogram_stats carries the actual counted max_value/max_percentage,
@@ -303,7 +304,7 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         if ctx.triggered_id == "histogram":
             if not relayout_data:
                 raise PreventUpdate
-            print(relayout_data)
+
             patched = Patch()
             updated = False
             x_min, x_max = x_range_state
@@ -361,3 +362,44 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             [Y_AXIS_TICK0, y_max],
             stats
         )
+    
+        # changing selected color
+    @app.callback(
+        Output("color-grid", "children"),
+        Input("color-picker", "data"),
+    )
+    def highlight_selected_color(color: str) -> list[html.Button | html.Div]:
+        """Redraws the swatch grid so the selected color is outlined."""
+        return _build_color_swatches(color)
+
+
+    @app.callback(
+        Output("color-picker", "data"),
+        Input({"type": "color-swatch", "hex": ALL}, "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def select_color(_n_clicks: list[int]) -> str:
+        """Sets the selected color to the swatch that was clicked."""
+        if not ctx.triggered_id or not any(_n_clicks):
+            raise PreventUpdate
+        return ctx.triggered_id["hex"]
+
+
+    @app.callback(
+        Output("color-panel", "style"),
+        Input("change-color-button", "n_clicks"),
+        State("color-panel", "style"),
+    )
+    def toggle_color_panel(n_clicks: int, current_style: dict) -> dict:
+        """Shows or hides the color panel on each click of the change-color button."""
+        if not n_clicks:
+            raise PreventUpdate
+        
+        style = current_style.copy()
+
+        if n_clicks % 2 == 1:
+            style["display"] = "block"
+        else:
+            style["display"] = "none"
+
+        return style

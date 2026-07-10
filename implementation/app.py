@@ -15,7 +15,7 @@ from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
 from configuration import BIN_WIDTH_IN_NM
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
-from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR
+from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
 from colors import SAVE_PNG_BTN_COLOR, PRINT_HISTOGRAM_BTN_COLOR, CHANGE_COLOR_BTN_COLOR
 from colors import NORMAL_CURVE_COLOR, LOGNORMAL_CURVE_COLOR, LORENTZIAN_CURVE_COLOR, CURVE_INACTIVE_COLOR
 from color_utils import hex_to_rgba, text_color_with_bg_color, border_style_for
@@ -51,15 +51,15 @@ def _build_button(label: str, background_color: str, button_id: str | dict[str, 
         "padding": "8px 16px",
         "backgroundColor": background_color,
         "color": text_color_with_bg_color(background_color),
-        "border": "none",
         "borderRadius": "6px",
         "cursor": "pointer",
         "fontSize": "14px",
+        "--hover-border-color": BTN_HOVER_BORDER_COLOR
     }
     if extra_style:
         style.update(extra_style)
 
-    return html.Button(label, id=button_id, style=style, **kwargs)
+    return html.Button(label, id=button_id, className="app-button", style=style, **kwargs)
 
 
 def _build_curve_toggle_button(curve_key: str, label: str, active_color: str, active_curves: list[str]) -> html.Button:

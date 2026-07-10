@@ -1,0 +1,8 @@
+.app-button {
+    border: 3px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.app-button:hover {
+    border-color: var(--hover-border-color, #000000);
+}

@@ -5,14 +5,16 @@ from dash import Dash, dash, dcc, html, Input, Output, State, Patch, ALL, ctx
 from dash.exceptions import PreventUpdate
 from plotly.graph_objects import Figure
 import numpy as np
-import json
-import math
+import os
 from typing import Any
+from pathlib import Path
 
 from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
-from configuration import BIN_WIDTH_IN_NM
+from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, INPUT_DATA_PATH
+from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
+from file_loader import derive_dataset_label
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
@@ -196,6 +198,16 @@ def _build_change_color_div() -> html.Div:
     )
 
 
+def build_page_title(input_data_path: Path) -> str:
+    """Builds the H1 text, appending the dataset folder name when meaningful."""
+    label :str | None = derive_dataset_label(input_data_path)
+    title_prefix :str = "Nanoparticle size distribution"
+    if label:
+        return f"{title_prefix} – {label}"
+    return title_prefix
+
+
+
 def _build_graph() -> dcc.Graph:
     """Builds the histogram graph."""
     return dcc.Graph(
@@ -226,7 +238,7 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
     return html.Div(
         id="page",
         children=[
-            html.H1("Nanoparticle size distribution", style={"textAlign": "center", "margin": "0 0 20px 0", "flex": "0 0 auto"}),
+            html.H1(build_page_title(INPUT_DATA_PATH), style={"textAlign": "center", "margin": "0 0 20px 0", "flex": "0 0 auto"}),
             html.Div(
                 [
                     _build_graph(),
@@ -264,6 +276,12 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
 def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -> None:
     """Builds the page layout (graph, button panel, bin-width slider)."""
     app.layout = _build_layout(initial_histogram)
+    label :str | None = derive_dataset_label(INPUT_DATA_PATH)
+    dataset_label :str
+    if not label:
+        dataset_label = ""
+    else:
+        dataset_label = f"_{label}"
 
     @app.callback(
         Output("histogram", "figure"),
@@ -403,3 +421,22 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             style["display"] = "none"
 
         return style
+
+    
+    @app.callback(
+        Output("save-button", "n_clicks"),  # alebo iný dummy output, pozri poznámku nižšie
+        Input("save-button", "n_clicks"),
+        State("histogram", "figure"),
+        prevent_initial_call=True,
+    )
+    def save_histogram_png(n_clicks: int, figure_data: dict) -> int:
+        if not n_clicks:
+            raise PreventUpdate
+
+        figure = Figure(figure_data)
+        
+        filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{n_clicks}.png"
+        output_path :Path = Path(os.path.join(OUTPUT_GRAPH_PATH, filename))
+        figure.write_image(output_path, width=PNG_EXPORT_WIDTH_IN_PIXELS, height=PNG_EXPORT_HEIGHT_IN_PIXELS, scale=PNG_EXPORT_SCALE)
+
+        return n_clicks

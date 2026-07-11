@@ -15,6 +15,16 @@ import logging
 from domain_errors import InvalidFileFormatError, MissingColumnError, EmptyMeasurementsError
 
 
+def derive_dataset_label(input_data_path: Path) -> str | None:
+    """Returns the subfolder name if input_data contains exactly one child, and it's a folder."""
+    children = [p for p in input_data_path.iterdir() if not p.name.startswith(".")]
+
+    if len(children) == 1 and children[0].is_dir():
+        return children[0].name
+
+    return None
+
+
 class FileLoader(ABC):
     """Abstract base class for data loaders that read from a single file."""
 

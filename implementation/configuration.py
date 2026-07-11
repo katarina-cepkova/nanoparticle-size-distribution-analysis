@@ -68,8 +68,11 @@ def _setup_logging() -> None:
     file_handler.setFormatter(file_formatter)   
     logger.addHandler(file_handler)
 
+    # suppressing loggers
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     flask.cli.show_server_banner = lambda *args: None
+    logging.getLogger("choreographer").setLevel(logging.WARNING)
+    logging.getLogger("kaleido").setLevel(logging.WARNING)
 
 
 def _ensure_chrome_available() -> None:

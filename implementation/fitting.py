@@ -171,3 +171,15 @@ def fit_lorentzian(data: np.ndarray) -> FitResult:
         rel_fwhm=rel_fwhm,
         log_likelihood=log_likelihood,
     )
+
+
+def evaluate_fit_pdf(x: np.ndarray, fit: FitResult) -> np.ndarray:
+    """Evaluates the fitted distribution's PDF at x, using loc/scale (plus shape for lognormal)."""
+    if fit.distribution == "normal":
+        return stats.norm.pdf(x, loc=fit.loc, scale=fit.scale)
+    elif fit.distribution == "lognormal":
+        return stats.lognorm.pdf(x, fit.params["sigma"], loc=fit.loc, scale=fit.scale)
+    elif fit.distribution == "lorentzian":
+        return stats.cauchy.pdf(x, loc=fit.loc, scale=fit.scale)
+    else:
+        raise ValueError(f"Unknown distribution: {fit.distribution}")

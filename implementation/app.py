@@ -258,7 +258,8 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
                     "max_value": initial_histogram.max_value,
                     "max_percentage": initial_histogram.max_percentage
                 }
-            )
+            ),
+            dcc.Store(id="histogram-id", data=0)
         ],
         style={
         "backgroundColor": BG_COLOR,
@@ -288,12 +289,14 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         Output("x-axis-range", "data"),
         Output("y-axis-range", "data"),
         Output("histogram-stats", "data"),
+        Output("histogram-id", "data"),
         Input("bin-width-slider", "value"),
         Input("color-picker", "data"),
         Input("histogram", "relayoutData"),
         State("x-axis-range", "data"),
         State("y-axis-range", "data"),
-        State("histogram-stats", "data")
+        State("histogram-stats", "data"),
+        State("histogram-id", "data")
     )
     def update_histogram(
         bin_width_slider: float,
@@ -301,8 +304,9 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         relayout_data: dict | None,
         x_range_state: list[float],
         y_range_state: list[float],
-        histogram_stats: dict[str, float]
-    ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any, dict[str, float] | Any]:
+        histogram_stats: dict[str, float],
+        histogram_id: int
+    ) -> tuple[Figure | Patch, list[float] | Any, list[float] | Any, dict[str, float] | Any, int | Any]:
         """Rebuilds or patches the histogram figure for a bin-width, color, or pan/zoom/reset change."""
         # state: x/y-axis-range stores carry the last-seen range so a relayout
         # event (which only reports the axis that changed) can merge with it.
@@ -316,7 +320,7 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             border_color, border_width = border_style_for(color)
             patched["data"][0]["marker"]["line"]["color"] = border_color
             patched["data"][0]["marker"]["line"]["width"] = border_width
-            return patched, dash.no_update, dash.no_update, dash.no_update
+            return patched, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
         # case: pan/zoom/reset -> patch only the axis/axes relayout_data reports
         if ctx.triggered_id == "histogram":
@@ -365,20 +369,22 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             if not updated:
                 raise PreventUpdate  # untracked relayout event, nothing to patch
 
-            return patched, [x_min, x_max], [y_min, y_max], dash.no_update
+            return patched, [x_min, x_max], [y_min, y_max], dash.no_update, dash.no_update
 
-        # case: bin-width slider change or initial load -> full rebuild
+        # case: bin-width slider change or initial load -> full rebuild, new histogram id
         histogram = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
         figure, x_max, y_max = build_visual_histogram(histogram, color)
         # max_value is fixed by the dataset; max_percentage depends on bin width,
         # so it's recounted here and stored for the next axis reset
         stats = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
+        new_id = histogram_id + 1
 
         return (
             figure, 
             [X_AXIS_TICK0, x_max], 
             [Y_AXIS_TICK0, y_max],
-            stats
+            stats,
+            new_id
         )
     
         # changing selected color
@@ -424,19 +430,23 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
 
     
     @app.callback(
-        Output("save-button", "n_clicks"),  # alebo iný dummy output, pozri poznámku nižšie
+        Output("save-button", "n_clicks"),
         Input("save-button", "n_clicks"),
         State("histogram", "figure"),
+        State("histogram-id", "data"),
         prevent_initial_call=True,
     )
-    def save_histogram_png(n_clicks: int, figure_data: dict) -> int:
+    def save_histogram_png(n_clicks: int, figure_data: dict, histogram_id: int) -> int:
         if not n_clicks:
             raise PreventUpdate
 
         figure = Figure(figure_data)
         
-        filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{n_clicks}.png"
+        filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{histogram_id}.png"
         output_path :Path = Path(os.path.join(OUTPUT_GRAPH_PATH, filename))
         figure.write_image(output_path, width=PNG_EXPORT_WIDTH_IN_PIXELS, height=PNG_EXPORT_HEIGHT_IN_PIXELS, scale=PNG_EXPORT_SCALE)
 
         return n_clicks
+
+
+    

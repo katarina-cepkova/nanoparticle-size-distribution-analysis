@@ -1,11 +1,14 @@
 import plotly.graph_objects as go
-from plotly.graph_objects import Figure, Bar
+from plotly.graph_objects import Figure, Bar, Scatter
+from scipy import stats
+import numpy as np
 import math
 
+from fitting import FitResult, evaluate_fit_pdf
 from histogram import HistogramResult
-from colors import DARK_AXIS_COLOR, BG_COLOR
-from color_utils import border_style_for
-from font_sizes import DEFAULT_FONT_SIZE, AXIS_TITLE_FONT_SIZE, AXIS_TICK_FONT_SIZE
+from colors import DARK_AXIS_COLOR, DARK_BORDER_COLOR, BG_COLOR, CURVE_COLORS, LEGEND_TEXT_COLOR
+from color_utils import border_style_for, hex_to_rgba
+from font_sizes import DEFAULT_FONT_SIZE, AXIS_TITLE_FONT_SIZE, AXIS_TICK_FONT_SIZE, LEGEND_FONT_SIZE
 
 
 # graph constants
@@ -95,7 +98,29 @@ def build_base_axis() -> dict:
     )
 
 
-def build_visual_histogram(histogram: HistogramResult, color: str) -> tuple[Figure, float, float]:
+def build_fit_curve(
+        x_min: float, 
+        x_max: float, 
+        bin_width: float, 
+        fit: FitResult, 
+        color: str, 
+        n_points: int = 300
+    ) -> go.Scatter:
+    """Creates a distribution-specific curve"""
+
+    x = np.linspace(x_min, x_max, n_points)
+    y_density = evaluate_fit_pdf(x, fit)
+    y_percentage = y_density * bin_width * 100
+
+    return go.Scatter(x=x, y=y_percentage, mode="lines", name=fit.distribution.capitalize(), line=dict(color=color, width=2))
+
+
+def build_visual_histogram(
+        histogram: HistogramResult, 
+        color: str, 
+        active_curves: list[str], 
+        fit_results: dict[str, FitResult]
+    ) -> tuple[Figure, float, float]:
     """Creates a visual histogram"""
     figure :Figure = go.Figure()
     # calculate bin width and the middle value on the x axis (bin centres)
@@ -123,6 +148,18 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> tuple[Figu
     )
 
     figure.add_trace(bar)
+
+    # add curves
+    for curve_key in active_curves:
+        curve = build_fit_curve(
+            X_AXIS_TICK0, 
+            histogram.max_value, 
+            bin_width, 
+            fit_results[curve_key], 
+            CURVE_COLORS[curve_key]
+        )
+        figure.add_trace(curve)
+
     figure.update_layout(
         autosize=True,
         uirevision="constant",
@@ -130,6 +167,20 @@ def build_visual_histogram(histogram: HistogramResult, color: str) -> tuple[Figu
         plot_bgcolor=BG_COLOR,
         paper_bgcolor=BG_COLOR,
         font=dict(size=DEFAULT_FONT_SIZE),
+        legend=dict(
+            x=0.98,
+            y=0.98,
+            xanchor="right",
+            yanchor="top",
+            bgcolor=hex_to_rgba(BG_COLOR, 0.7), 
+            bordercolor=hex_to_rgba(DARK_BORDER_COLOR, 0.15),
+            borderwidth=1,
+            font=dict(
+                size=LEGEND_FONT_SIZE,
+                color=LEGEND_TEXT_COLOR,
+            ),
+            
+        ),
 
         xaxis=dict(
             **build_base_axis(),  # ** unpacks the returned dict

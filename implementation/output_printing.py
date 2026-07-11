@@ -1,3 +1,6 @@
+import datetime
+from datetime import datetime
+
 from data_loader import ParticleSizesData
 from configuration import DECIMAL_PLACES, PERCENTAGE_DECIMAL_PLACES, ALPHA
 from moments import MomentsResult
@@ -295,7 +298,15 @@ def compute_num_of_digits(bin_count :int) -> int:
     return digits
 
 
-def print_histogram_summary(printer: Printer, histogram: HistogramResult) -> None:
+def format_date_pretty(header_width :int) -> str:
+    """Formats date and time info and aligns to the right according to the header_width"""
+    timestamp :str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    prefix: str = "Date and time:"
+    aligned_date: str = f"{prefix}{timestamp:>{max(header_width - len(prefix), 0)}}"
+    return aligned_date
+
+
+def print_histogram_summary(printer: Printer, histogram: HistogramResult, code: str) -> None:
     """
     Prints bin count, empirical mode, and the full bin-by-bin breakdown
     (size range -> particle count) in one simple Metric | Value table.
@@ -328,7 +339,8 @@ def print_histogram_summary(printer: Printer, histogram: HistogramResult) -> Non
     header :str = build_table_header_string(col_names, label_width, col_width)
     header_width :int = len(header)
 
-    print_section_header(printer, "HISTOGRAM SUMMARY", header_width)
+    print_section_header(printer, f"HISTOGRAM SUMMARY – {code}", header_width)
+    printer.print(format_date_pretty(header_width))
     print_table_header(printer, header)
 
     for i, group in enumerate(row_groups):

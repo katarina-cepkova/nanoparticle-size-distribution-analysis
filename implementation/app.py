@@ -15,6 +15,8 @@ from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
 from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, INPUT_DATA_PATH
 from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
 from file_loader import derive_dataset_label
+from printer import Printer
+from output_printing import print_histogram_summary
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
@@ -274,15 +276,10 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
     )
 
 
-def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -> None:
+def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: HistogramResult) -> None:
     """Builds the page layout (graph, button panel, bin-width slider)."""
     app.layout = _build_layout(initial_histogram)
     label :str | None = derive_dataset_label(INPUT_DATA_PATH)
-    dataset_label :str
-    if not label:
-        dataset_label = ""
-    else:
-        dataset_label = f"_{label}"
 
     @app.callback(
         Output("histogram", "figure"),
@@ -372,11 +369,11 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             return patched, [x_min, x_max], [y_min, y_max], dash.no_update, dash.no_update
 
         # case: bin-width slider change or initial load -> full rebuild, new histogram id
-        histogram = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
+        histogram :HistogramResult = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
         figure, x_max, y_max = build_visual_histogram(histogram, color)
         # max_value is fixed by the dataset; max_percentage depends on bin width,
         # so it's recounted here and stored for the next axis reset
-        stats = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
+        stats :dict[str, float] = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
         new_id = histogram_id + 1
 
         return (
@@ -441,7 +438,8 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
             raise PreventUpdate
 
         figure = Figure(figure_data)
-        
+        dataset_label :str = "" if not label else f"_{label}"
+
         filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{histogram_id}.png"
         output_path :Path = Path(os.path.join(OUTPUT_GRAPH_PATH, filename))
         figure.write_image(output_path, width=PNG_EXPORT_WIDTH_IN_PIXELS, height=PNG_EXPORT_HEIGHT_IN_PIXELS, scale=PNG_EXPORT_SCALE)
@@ -449,4 +447,22 @@ def build_app(app: Dash, data: np.ndarray, initial_histogram: HistogramResult) -
         return n_clicks
 
 
-    
+    @app.callback(
+        Output("print-info-button", "n_clicks"),
+        Input("print-info-button", "n_clicks"),
+        State("bin-width-slider", "value"),
+        State("histogram-id", "data"),
+        prevent_initial_call=True
+    )
+    def print_histogram_data(n_clicks: int, bin_width_slider: float, histogram_id: int) -> int:
+        if not n_clicks:
+            raise PreventUpdate
+
+        histogram :HistogramResult = compute_histogram(
+            data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
+        
+        dataset_label :str = "" if not label else f"{label} "
+
+        code :str = f"{dataset_label}no. {histogram_id}"
+        print_histogram_summary(printer, histogram, code)
+        return n_clicks

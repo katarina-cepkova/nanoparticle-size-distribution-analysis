@@ -74,7 +74,7 @@ def main() -> None:
 
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
         app :Dash = Dash(__name__)
-        build_app(app, data.sizes, histogram)
+        build_app(app, printer, data.sizes, histogram)
         app.run()
 
     except AppError as e:

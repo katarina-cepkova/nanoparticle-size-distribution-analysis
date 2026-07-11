@@ -8,18 +8,17 @@ from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
 from configuration import initialize_application
 from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX
 from configuration import INPUT_DATA_PATH, OUTPUT_DATA_PATH
-from configuration import DECIMAL_PLACES, ALPHA, BIN_WIDTH_IN_NM
+from configuration import BIN_WIDTH_IN_NM
 
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
 from ks_test import KSTestResult, compute_ks_test
 from histogram import HistogramResult, compute_histogram, find_max_value
 
-from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table, print_histogram_summary
+from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter
-
-from histogram_visual import build_visual_histogram
 from app import build_app
+
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
@@ -74,7 +73,6 @@ def main() -> None:
         print_fit_and_ks_table(printer, fits, ks_results)
 
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
-
         app :Dash = Dash(__name__)
         build_app(app, data.sizes, histogram)
         app.run()

@@ -55,26 +55,30 @@ def main() -> None:
         printer = ConsolePrinter()
 
     try:
+        # data and initial measures
         data: ParticleSizesData = data_loader.load_data()
         max_value :float = find_max_value(data.sizes)
         total_nanoparticles :int = len(data.sizes)
-
         print_measurement_summary(printer, data, total_nanoparticles)
 
+        # moments
         moments: MomentsResult = compute_moments(data.sizes)
         print_moments_summary(printer, moments)
 
+        # fitting
         normal_fit: FitResult = fit_normal(data.sizes)
         lognormal_fit: FitResult = fit_lognormal(data.sizes)
         lorentzian_fit: FitResult = fit_lorentzian(data.sizes)
         fits : list[FitResult] = [normal_fit, lognormal_fit, lorentzian_fit]
-
+        # ks test
         ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
         print_fit_and_ks_table(printer, fits, ks_results)
 
+        # app with histogram
+        fit_results_by_distribution: dict[str, FitResult] = {fit.distribution: fit for fit in fits}
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
         app :Dash = Dash(__name__)
-        build_app(app, printer, data.sizes, histogram)
+        build_app(app, printer, data.sizes, histogram, fit_results_by_distribution)
         app.run()
 
     except AppError as e:

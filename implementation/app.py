@@ -9,6 +9,7 @@ import os
 from typing import Any
 from pathlib import Path
 
+from fitting import FitResult
 from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
@@ -21,7 +22,7 @@ from output_printing import print_histogram_summary
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
 from colors import SAVE_PNG_BTN_COLOR, PRINT_HISTOGRAM_BTN_COLOR, CHANGE_COLOR_BTN_COLOR
-from colors import NORMAL_CURVE_COLOR, LOGNORMAL_CURVE_COLOR, LORENTZIAN_CURVE_COLOR, CURVE_INACTIVE_COLOR
+from colors import CURVE_INACTIVE_COLOR, CURVE_COLORS
 from color_utils import hex_to_rgba, text_color_with_bg_color, border_style_for
 
 
@@ -43,9 +44,9 @@ SLIDER_STEP :float = 0.01
 
 # curve toggle buttons: (key, label, active color)
 CURVE_OPTIONS: list[tuple[str, str, str]] = [
-    ("normal", "Normal", NORMAL_CURVE_COLOR),
-    ("lognormal", "Lognormal", LOGNORMAL_CURVE_COLOR),
-    ("lorentzian", "Lorentzian", LORENTZIAN_CURVE_COLOR),
+    ("normal", "Normal", CURVE_COLORS["normal"]),
+    ("lognormal", "Lognormal", CURVE_COLORS["lognormal"]),
+    ("lorentzian", "Lorentzian", CURVE_COLORS["lorentzian"]),
 ]
 
 #region BUTTONS
@@ -99,7 +100,7 @@ def _build_button_panel() -> html.Div:
                     _build_change_color_div()
                 ],
             ),
-            _build_curve_toggles(["normal", "lognormal", "lorentzian"]),
+            _build_curve_toggles([]),
         ],
         style={
             "width": "180px",
@@ -261,7 +262,9 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
                     "max_percentage": initial_histogram.max_percentage
                 }
             ),
-            dcc.Store(id="histogram-id", data=0)
+            # stores the histogram id to make graphs mappable to histogram data
+            dcc.Store(id="histogram-id", data=0),
+            dcc.Store(id="active-curves", data=[]),
         ],
         style={
         "backgroundColor": BG_COLOR,
@@ -276,7 +279,13 @@ def _build_layout(initial_histogram: HistogramResult) -> html.Div:
     )
 
 
-def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: HistogramResult) -> None:
+def build_app(
+        app: Dash, 
+        printer: Printer, 
+        data: np.ndarray, 
+        initial_histogram: HistogramResult, 
+        fits: dict[str, FitResult]
+    ) -> None:
     """Builds the page layout (graph, button panel, bin-width slider)."""
     app.layout = _build_layout(initial_histogram)
     label :str | None = derive_dataset_label(INPUT_DATA_PATH)
@@ -290,6 +299,7 @@ def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: 
         Input("bin-width-slider", "value"),
         Input("color-picker", "data"),
         Input("histogram", "relayoutData"),
+        Input("active-curves", "data"),
         State("x-axis-range", "data"),
         State("y-axis-range", "data"),
         State("histogram-stats", "data"),
@@ -299,6 +309,7 @@ def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: 
         bin_width_slider: float,
         color: str,
         relayout_data: dict | None,
+        active_curves: list[str],
         x_range_state: list[float],
         y_range_state: list[float],
         histogram_stats: dict[str, float],
@@ -370,7 +381,7 @@ def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: 
 
         # case: bin-width slider change or initial load -> full rebuild, new histogram id
         histogram :HistogramResult = compute_histogram(data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
-        figure, x_max, y_max = build_visual_histogram(histogram, color)
+        figure, x_max, y_max = build_visual_histogram(histogram, color, active_curves, fits)
         # max_value is fixed by the dataset; max_percentage depends on bin width,
         # so it's recounted here and stored for the next axis reset
         stats :dict[str, float] = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
@@ -466,3 +477,35 @@ def build_app(app: Dash, printer: Printer, data: np.ndarray, initial_histogram: 
         code :str = f"{dataset_label}no. {histogram_id}"
         print_histogram_summary(printer, histogram, code)
         return n_clicks
+
+
+    @app.callback(
+        Output("active-curves", "data"),
+        Input({"type": "curve-toggle", "curve": ALL}, "n_clicks"),
+        State("active-curves", "data"),
+        prevent_initial_call=True,
+    )
+    def toggle_curve(n_clicks: list[int], active_curves: list[str]) -> list[str]:
+        """Adds/removes the clicked curve from the active-curves list."""
+        if not ctx.triggered_id:
+            raise PreventUpdate
+        
+        curve_key = ctx.triggered_id["curve"]
+        updated = active_curves.copy()
+
+        if curve_key in updated:
+            updated.remove(curve_key)
+        else:
+            updated.append(curve_key)
+
+        return updated
+    
+    
+    @app.callback(
+        Output("curve-toggle-panel", "children"),
+        Input("active-curves", "data"),
+        prevent_initial_call=True
+    )
+    def highlight_active_curves(active_curves: list[str]) -> list[html.Button]:
+        """Redraws the curve-toggle buttons so active ones are colored."""
+        return [_build_curve_toggle_button(key, label, color, active_curves) for key, label, color in CURVE_OPTIONS]

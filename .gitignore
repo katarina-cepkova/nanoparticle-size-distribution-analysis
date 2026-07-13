@@ -222,5 +222,6 @@ data/input_data/*
 !data/input_data/.gitkeep
 data/output_data/*
 !data/output_data/.gitkeep
+!data/output_data/graphs/
 data/output_data/graphs/*
 !data/output_data/graphs/.gitkeep

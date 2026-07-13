@@ -15,8 +15,8 @@ load_dotenv(dotenv_path=PROJECT_ROOT / '.env')
 SEPARATOR :str = os.getenv('SEPARATOR', '---')
 END_OF_INPUT :str = os.getenv('END_OF_INPUT', 'END')
 
-CSV_PARTICLE_COLUMN_NAME :str = os.getenv('CSV_COLUMN_NAME', 'Length')
-XLSX_PARTICLE_COLUMN_INDEX :int = int(os.getenv('XLSX_COLUMN_INDEX', -1))  # default to -1 if not set
+CSV_PARTICLE_COLUMN_NAME :str = os.getenv('CSV_PARTICLE_COLUMN_NAME', 'Length')
+XLSX_PARTICLE_COLUMN_INDEX :int = int(os.getenv('XLSX_PARTICLE_COLUMN_INDEX', -1))  # default to -1 if not set
 
 INPUT_DATA_PATH :Path = PROJECT_ROOT / os.getenv('INPUT_DATA_PATH', 'data/input_data')
 OUTPUT_DATA_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_data')
@@ -31,7 +31,7 @@ LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 DECIMAL_PLACES :int = int(os.getenv('DECIMAL_PLACES', 6))
 PERCENTAGE_DECIMAL_PLACES :int = int(os.getenv('PERCENTAGE_DECIMAL_PLACES', 2))
 ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
-BIN_WIDTH_IN_NM : float = float(os.getenv('BIN_WIDTH', 0.25))
+BIN_WIDTH_IN_NM : float = float(os.getenv('BIN_WIDTH_IN_NM', 0.25))
 
 
 def _setup_directories() -> None:

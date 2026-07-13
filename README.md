@@ -14,7 +14,7 @@ This documentation is split into two guides, depending on who you are:
   program and analyze their own data, with no assumed programming or
   command-line experience. Covers setup, configuration, and day-to-day use.
 
-- **[DEVELOPER DOCUMENTATION](documentation/DEVELOPER_DOC.md)** — for someone who wants to
+- **[DEVELOPER DOCUMENTATION](documentation/DEV_DOC.md)** — for someone who wants to
   *read, modify, or extend* the code. Covers architecture, module
   responsibilities, technologies used, and the reasoning behind key design
   decisions made during development.

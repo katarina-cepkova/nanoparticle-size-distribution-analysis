@@ -4,7 +4,7 @@ This guide walks you through running the **Nanoparticle Size Distribution
 Analysis Tool**, from opening a console for the first time to reading your
 results. No prior programming experience is assumed.
 
-See also: **[README.md](README.md)** · **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)**
+See also: **[README.md](../README.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)**
 
 ---
 
@@ -302,6 +302,7 @@ crash silently. Here are the messages you might see, grouped by cause:
   file at all, e.g. it's been deleted, moved, or is currently open in
   another program (common with Excel files open in Microsoft Excel —
   close the file and try again).
+
 **Problems with the data itself (even if the files loaded fine):**
  
 - **"Bin width must be positive, got '...'."** — only relevant if you're
@@ -320,5 +321,6 @@ crash silently. Here are the messages you might see, grouped by cause:
 - **"Error: ..."** printed just before the program exits — this is the
   catch-all message for any of the above; the text after "Error:" always
   names the specific problem, so start there.
+
 If you're stuck, check the detailed log file in your `logs` folder
 (`app.log`) — it contains more technical detail than the console output.

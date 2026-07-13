@@ -6,6 +6,7 @@ from configuration import BIN_WIDTH_IN_NM
 
 @dataclass
 class HistogramResult:
+    bin_width :float            # width of every bin
     bin_edges :np.ndarray       # bin boundaries; length is bin_count + 1
     bin_counts :np.ndarray      # particle count per bin; length is bin_count
     bin_count :int              # number of bins the data was split into
@@ -80,6 +81,7 @@ def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nano
     empirical_mode :float = float((bin_edges[max_bin_index] + bin_edges[max_bin_index + 1]) / 2)  # no index out of range, num of bin_edges is bin_count + 1
 
     return HistogramResult(
+        bin_width=bin_width,
         bin_edges=bin_edges,
         bin_counts=bin_counts,
         bin_count=bin_count,

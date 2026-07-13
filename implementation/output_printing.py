@@ -97,7 +97,7 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
         for label, values in group:
             print_row(printer, label, values, col_width, label_width)
         if i < len(row_groups) - 1:
-            printer.print()  # blank separator between groups of related metrics
+            print_row(printer, "", [None] * (len(col_names)), col_width, label_width)  # blank separator between groups of related metrics
     printer.print('-' * header_width)
 
 
@@ -237,7 +237,7 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
 
     rows.append(("Location",            [fit.loc for fit in fits]))
     rows.append(("Scale",               [fit.scale for fit in fits]))
-    rows.append(("", []))
+    rows.append(("", [None] * len(fits)))
     rows.append(("Theoretical mean",    [fit.theoretical_mean for fit in fits]))
     rows.append(("Theoretical median",  [fit.theoretical_median for fit in fits]))
     rows.append(("Theoretical mode",    [fit.theoretical_mode for fit in fits]))
@@ -246,7 +246,7 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
     rows.append(("Theoretical PDI",     [fit.theoretical_pdi for fit in fits]))
     rows.append(("FWHM",                [fit.fwhm for fit in fits]))
     rows.append(("Relative FWHM",       [fit.rel_fwhm for fit in fits]))
-    rows.append(("", []))
+    rows.append(("", [None] * len(fits)))
     rows.append(("Log-Likelihood",      [fit.log_likelihood for fit in fits]))
 
     # mark whichever fit has the highest log-likelihood as the best-fitting distribution
@@ -328,7 +328,8 @@ def print_histogram_summary(printer: Printer, histogram: HistogramResult, code: 
 
     row_groups :list[list[Row]] = [
         [
-            ("Nanoparticle count", [histogram.nanoparticle_count, f"{100:.{PERCENTAGE_DECIMAL_PLACES}f}"])
+            ("Nanoparticle count", [histogram.nanoparticle_count, f"{100:.{PERCENTAGE_DECIMAL_PLACES}f}"]),
+            ("Bin width (nm)", [histogram.bin_width, None])
         ],
         bin_rows,
     ]

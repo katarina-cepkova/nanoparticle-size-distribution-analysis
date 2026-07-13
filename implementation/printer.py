@@ -17,12 +17,22 @@ class Printer(ABC):
         """Writes one line of text (with a trailing newline) to the output target."""
         ...
 
+    @abstractmethod
+    def close(self) -> None:
+        """Releases any resources held by the output target. Called once the report is done."""
+        ...
+
 
 class ConsolePrinter(Printer):
     """Writes report output to standard output (the console)."""
 
     def print(self, text: str = "") -> None:
+        """Writes one line of text (with a trailing newline) to stdout."""
         print(text)
+
+    def close(self) -> None:
+        """No-op: stdout has no resource to release."""
+        pass
 
 
 class FilePrinter(Printer):
@@ -39,9 +49,28 @@ class FilePrinter(Printer):
 
 
     def print(self, text: str = "") -> None:
+        """Writes one line of text (with a trailing newline) to the file."""
         self._file.write(text + "\n")
 
 
     def close(self) -> None:
         """Closes the underlying file handle. Must be called once the report is done."""
         self._file.close()
+
+
+class CompositePrinter(Printer):
+    """Fans out report output to a group of Printers, e.g. console and file at once."""
+
+    def __init__(self, printers :list[Printer]) -> None:
+        """Stores the Printers to fan out to."""
+        self.printers :list[Printer] = printers
+
+    def print(self, text: str = "") -> None:
+        """Writes one line of text to every wrapped Printer."""
+        for printer in self.printers:
+            printer.print(text)
+
+    def close(self) -> None:
+        """Closes every wrapped Printer."""
+        for printer in self.printers:
+            printer.close()

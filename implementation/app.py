@@ -12,7 +12,7 @@ from pathlib import Path
 from fitting import FitResult
 from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
-from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0, Y_AXIS_HARD_MAX
+from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0
 from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, INPUT_DATA_PATH
 from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
 from file_loader import derive_dataset_label
@@ -360,7 +360,7 @@ def build_app(
             if "yaxis.range[0]" in relayout_data or "yaxis.range[1]" in relayout_data:
                 # y zoom/pan, capped below Y_AXIS_HARD_MAX
                 y_min = relayout_data.get("yaxis.range[0]", y_min)
-                y_max = min(relayout_data.get("yaxis.range[1]", y_max), Y_AXIS_HARD_MAX)
+                y_max = relayout_data.get("yaxis.range[1]", y_max)
                 patched["layout"]["yaxis"]["dtick"] = pick_y_dtick(y_min, y_max)
                 patched["layout"]["yaxis"]["range"] = [y_min, y_max]
                 updated = True

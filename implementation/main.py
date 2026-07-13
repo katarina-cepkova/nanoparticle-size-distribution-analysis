@@ -1,9 +1,11 @@
 import argparse
 import sys
 from dash import Dash
+from pathlib import Path
 
 from domain_errors import AppError
 from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
+from file_loader import derive_dataset_label
 
 from configuration import initialize_application
 from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX
@@ -16,8 +18,9 @@ from ks_test import KSTestResult, compute_ks_test
 from histogram import HistogramResult, compute_histogram, find_max_value
 
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
-from printer import Printer, FilePrinter, ConsolePrinter
+from printer import Printer, FilePrinter, ConsolePrinter, CompositePrinter
 from app import build_app
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -31,10 +34,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default=None,
-        metavar="PATH",
-        help="Write the report to this .txt file instead of printing to the console. "
-             "If omitted, the report is printed to the console."
+        nargs="+",
+        choices=["console", "file"],
+        default=["console", "file"],
+        help="Where to write the report: 'console', 'file', or both (default: both).",
     )
     return parser.parse_args()
 
@@ -49,10 +52,18 @@ def main() -> None:
     else:  # args.source == "file"
         data_loader = DirectoryLoader(INPUT_DATA_PATH, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX)
     
-    if args.output:
-        printer: Printer = FilePrinter(OUTPUT_DATA_PATH / args.output)
-    else:
-        printer = ConsolePrinter()
+    printers :list[Printer] = []
+    if "console" in args.output:
+        printers.append(ConsolePrinter())
+    if "file" in args.output:
+        dataset_label : str | None = derive_dataset_label(INPUT_DATA_PATH)
+        summary_suffix : str = "stat_summary.txt"
+        summary_filename :str = f"{dataset_label}-{summary_suffix}" if dataset_label else summary_suffix
+        summary_file_path :Path = OUTPUT_DATA_PATH / summary_filename
+
+        printers.append(FilePrinter(summary_file_path))
+
+    printer :Printer = CompositePrinter(printers)
 
     try:
         # data and initial measures

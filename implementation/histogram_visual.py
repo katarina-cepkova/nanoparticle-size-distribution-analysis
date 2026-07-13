@@ -148,13 +148,16 @@ def build_visual_histogram(
     # maximum percentage from the active curves
     total_curve_maximum :float = 0.0
 
+    # round the axis max up to a tick so the last tick lands on the axis edge
+    x_dtick, x_max = compute_nice_x_axis(X_AXIS_TICK0, histogram.bin_edges[-1])
+
     # add curves
     for curve_key in active_curves:
         curve :go.Scatter
         curve_max :float
         curve, curve_max = build_fit_curve(
             X_AXIS_TICK0, 
-            histogram.max_value, 
+            x_max, 
             histogram.bin_width, 
             fit_results[curve_key], 
             CURVE_COLORS[curve_key]
@@ -162,8 +165,6 @@ def build_visual_histogram(
         figure.add_trace(curve)
         total_curve_maximum = max(total_curve_maximum, curve_max)
 
-    # round the axis max up to a tick so the last tick lands on the axis edge
-    x_dtick, x_max = compute_nice_x_axis(X_AXIS_TICK0, histogram.max_value)
     # y-axis must cover the entire graph - whichever (curves, histogram) is taller
     y_dtick, y_max = compute_nice_y_axis(Y_AXIS_TICK0, max(histogram.max_percentage, total_curve_maximum))
 

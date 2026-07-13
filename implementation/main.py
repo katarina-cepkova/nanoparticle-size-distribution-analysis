@@ -25,6 +25,11 @@ from app import build_app
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
+    dataset_label : str | None = derive_dataset_label(INPUT_DATA_PATH)
+    summary_suffix : str = "stat_summary.txt"
+    summary_filename :str = f"{dataset_label}-{summary_suffix}" if dataset_label else summary_suffix
+    summary_file_path :Path = OUTPUT_DATA_PATH / summary_filename
+
     parser :argparse.ArgumentParser = argparse.ArgumentParser(description="Nanoparticle size distribution analysis tool")
     parser.add_argument(
         "--source",
@@ -38,6 +43,11 @@ def parse_args() -> argparse.Namespace:
         choices=["console", "file"],
         default=["console", "file"],
         help="Where to write the report: 'console', 'file', or both (default: both).",
+    )
+    parser.add_argument(
+        "--output-file",
+        default=summary_file_path,
+        help="Path to the statistic report file, used only when 'file' is included in --output."
     )
     return parser.parse_args()
 
@@ -56,12 +66,7 @@ def main() -> None:
     if "console" in args.output:
         printers.append(ConsolePrinter())
     if "file" in args.output:
-        dataset_label : str | None = derive_dataset_label(INPUT_DATA_PATH)
-        summary_suffix : str = "stat_summary.txt"
-        summary_filename :str = f"{dataset_label}-{summary_suffix}" if dataset_label else summary_suffix
-        summary_file_path :Path = OUTPUT_DATA_PATH / summary_filename
-
-        printers.append(FilePrinter(summary_file_path))
+        printers.append(FilePrinter(args.output_file))
 
     printer :Printer = CompositePrinter(printers)
 

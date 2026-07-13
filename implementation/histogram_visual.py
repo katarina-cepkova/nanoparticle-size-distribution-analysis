@@ -123,8 +123,6 @@ def build_visual_histogram(
     ) -> tuple[Figure, float, float]:
     """Creates a visual histogram"""
     figure :Figure = go.Figure()
-    # calculate bin width and the middle value on the x axis (bin centres)
-    bin_width :float = histogram.bin_edges[1] - histogram.bin_edges[0]
     x :list[float] = []
 
     for i in range(histogram.bin_count):
@@ -141,7 +139,7 @@ def build_visual_histogram(
     bar :Bar = go.Bar(
         x=x,
         y=histogram.bin_percentages,
-        width=bin_width * (1-BAR_GAP_FRACTION),
+        width=histogram.bin_width * (1-BAR_GAP_FRACTION),
         marker_color=color,
         marker_line_color=border_color,
         marker_line_width=border_width
@@ -154,7 +152,7 @@ def build_visual_histogram(
         curve = build_fit_curve(
             X_AXIS_TICK0, 
             histogram.max_value, 
-            bin_width, 
+            histogram.bin_width, 
             fit_results[curve_key], 
             CURVE_COLORS[curve_key]
         )

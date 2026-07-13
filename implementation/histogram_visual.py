@@ -34,7 +34,7 @@ Y_AXIS_DTICK: float = 5
 Y_AXIS_TICKFORMAT: str = ".1f"
 
 CANDIDATE_X_TICK_STEPS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
-CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (0.5, 1.0, 2.0, 2.5, 5.0, 10.0, 20.0)
+CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (0.5, 1.0, 2.0, 2.5, 5.0, 10.0, 20.0, 25.0, 50.0, 75.0, 100.0)
 MAX_X_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable on xaxis before escalating
 MAX_Y_TICK_COUNT: int = 10 
 

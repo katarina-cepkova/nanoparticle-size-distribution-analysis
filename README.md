@@ -6,6 +6,13 @@ It computes descriptive statistics, fits three theoretical size
 distributions (Normal, Lognormal, Lorentzian), tests how well each fits the
 data, and displays an interactive histogram with overlaid fit curves.
 
+This project was built for a statistics student who runs this kind of
+analysis in a lab, working around a manual CSV → Excel → OriginPro
+workflow. The requirements and design decisions throughout this
+documentation come from iterating directly with them as the intended
+user — understanding what their existing workflow actually needed to
+support, rather than designing in isolation.
+
 ## Documentation
 
 This documentation is split into two guides, depending on who you are:

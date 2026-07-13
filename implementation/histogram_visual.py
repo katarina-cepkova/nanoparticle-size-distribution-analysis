@@ -104,14 +104,17 @@ def build_fit_curve(
         fit: FitResult, 
         color: str, 
         n_points: int = 300
-    ) -> go.Scatter:
-    """Creates a distribution-specific curve"""
+    ) -> tuple[go.Scatter, float]:
+    """Creates a distribution-specific curve and finds its maximum"""
 
-    x = np.linspace(x_min, x_max, n_points)
-    y_density = evaluate_fit_pdf(x, fit)
-    y_percentage = y_density * bin_width * 100
+    x :np.ndarray = np.linspace(x_min, x_max, n_points)
+    y_density :np.ndarray = evaluate_fit_pdf(x, fit)
+    y_percentage :np.ndarray = y_density * bin_width * 100
 
-    return go.Scatter(x=x, y=y_percentage, mode="lines", name=fit.distribution.capitalize(), line=dict(color=color, width=2))
+    curve :go.Scatter = go.Scatter(x=x, y=y_percentage, mode="lines", name=fit.distribution.capitalize(), line=dict(color=color, width=2))
+    curve_max :float = float(np.max(y_percentage))
+
+    return curve, curve_max
 
 
 def build_visual_histogram(
@@ -120,7 +123,7 @@ def build_visual_histogram(
         active_curves: list[str], 
         fit_results: dict[str, FitResult]
     ) -> tuple[Figure, float, float]:
-    """Creates a visual histogram"""
+    """Creates a visual histogram with active_curves"""
     figure :Figure = go.Figure()
     x :list[float] = []
 
@@ -131,9 +134,6 @@ def build_visual_histogram(
         x.append(middle)
 
     border_color, border_width = border_style_for(color)
-    # round the axis max up to a tick so the last tick lands on the axis edge
-    x_dtick, x_max = compute_nice_x_axis(X_AXIS_TICK0, histogram.max_value)
-    y_dtick, y_max = compute_nice_y_axis(Y_AXIS_TICK0, histogram.max_percentage)
 
     bar :Bar = go.Bar(
         x=x,
@@ -145,10 +145,14 @@ def build_visual_histogram(
     )
 
     figure.add_trace(bar)
+    # maximum percentage from the active curves
+    total_curve_maximum :float = 0.0
 
     # add curves
     for curve_key in active_curves:
-        curve = build_fit_curve(
+        curve :go.Scatter
+        curve_max :float
+        curve, curve_max = build_fit_curve(
             X_AXIS_TICK0, 
             histogram.max_value, 
             histogram.bin_width, 
@@ -156,6 +160,12 @@ def build_visual_histogram(
             CURVE_COLORS[curve_key]
         )
         figure.add_trace(curve)
+        total_curve_maximum = max(total_curve_maximum, curve_max)
+
+    # round the axis max up to a tick so the last tick lands on the axis edge
+    x_dtick, x_max = compute_nice_x_axis(X_AXIS_TICK0, histogram.max_value)
+    # y-axis must cover the entire graph - whichever (curves, histogram) is taller
+    y_dtick, y_max = compute_nice_y_axis(Y_AXIS_TICK0, max(histogram.max_percentage, total_curve_maximum))
 
     figure.update_layout(
         autosize=True,

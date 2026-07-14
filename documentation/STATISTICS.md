@@ -7,9 +7,7 @@ precise formulas used. It's written so that no math or statistics
 background is assumed; every formula is followed by a plain-language
 explanation of what it means.
 
-For how this is *implemented* in code, see
-**[DEVELOPER DOCUMENTATION](DEV_DOC.md)**. For how to *run* the
-program, see **[USER DOCUMENTATION](USER_DOC.md)**.
+See also: **[README.md](../README.md)** · **[USER DOCUMENTATION](USER_DOC.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)** · **[CHEATSHEET](CHEATSHEET.md)**
 
 ---
 

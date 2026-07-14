@@ -42,3 +42,8 @@ This documentation is split into three guides:
   own terms, independent of the code: why these distributions and tests
   were chosen, the exact formulas being computed, and no programming or
   advanced math background required to follow it.
+
+- **[CHEATSHEET](documentation/CHEATSHEET.md)** — every console command
+  from the User Documentation in one place, no explanations. For once
+  you're already comfortable with the workflow and just need a quick
+  lookup instead of the full walkthrough.

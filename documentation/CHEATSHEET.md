@@ -1,8 +1,11 @@
 # Quick Reference Cheatsheet
 
+
 Every command from the User Documentation, in one place — no explanations,
-just the commands. See **[USER DOCUMENTATION](documentation/USER_DOC.md)**
+just the commands. See **[USER DOCUMENTATION](USER_DOC.md)**
 if you need the full walkthrough or a refresher on what any of this does.
+
+See also: **[README](../README.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)** · **[STATISTICS](STATISTICS.md)**
 
 ---
 

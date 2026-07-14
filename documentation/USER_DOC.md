@@ -4,7 +4,7 @@ This guide walks you through running the **Nanoparticle Size Distribution
 Analysis Tool**, from opening a console for the first time to reading your
 results. No prior programming experience is assumed.
 
-See also: **[README](../README.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)** · **[STATISTICS](STATISTICS.md)**
+See also: **[README](../README.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)** · **[STATISTICS](STATISTICS.md)** · **[CHEATSHEET](CHEATSHEET.md)**
 
 ---
 

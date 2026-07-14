@@ -25,7 +25,7 @@ class DataLoader(ABC):
     """Abstract base class for all particle-size data loaders."""
 
     @abstractmethod
-    def load_data(self) -> ParticleSizesData | None:
+    def load_data(self) -> ParticleSizesData:
         pass
 
 

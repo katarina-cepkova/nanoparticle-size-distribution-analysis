@@ -4,7 +4,7 @@ from dash import Dash
 from pathlib import Path
 
 from domain_errors import AppError
-from data_loader import DirectoryLoader, ConsoleLoader, ParticleSizesData
+from data_loader import DataLoader, ParticleSizesData, ConsoleLoader, DirectoryLoader
 from file_loader import derive_dataset_label
 
 from configuration import initialize_application
@@ -20,7 +20,6 @@ from histogram import HistogramResult, compute_histogram, find_max_value
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter, CompositePrinter
 from app import build_app
-
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,16 +51,19 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    """Entry point: initialises the app, selects a data loader, and prints statistical results."""
-    initialize_application()
-    args :argparse.Namespace = parse_args()
-
+def build_data_loader(args :argparse.Namespace) -> DataLoader:
+    """Builds the data loader (console or directory) selected by the --source argument."""
+    data_loader :DataLoader
     if args.source == "console":
-        data_loader :ConsoleLoader | DirectoryLoader = ConsoleLoader(SEPARATOR, END_OF_INPUT)
+        data_loader = ConsoleLoader(SEPARATOR, END_OF_INPUT)
     else:  # args.source == "file"
         data_loader = DirectoryLoader(INPUT_DATA_PATH, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX)
-    
+    return data_loader
+
+
+def build_printer_for_console_app(args :argparse.Namespace) -> Printer:
+    """Builds the composite printer for the initial statistics report, combining console 
+    and/or file printers per the --output argument."""
     printers :list[Printer] = []
     if "console" in args.output:
         printers.append(ConsolePrinter())
@@ -69,40 +71,79 @@ def main() -> None:
         printers.append(FilePrinter(args.output_file))
 
     printer :Printer = CompositePrinter(printers)
+    return printer
+
+
+def build_printer_for_dash_app(args :argparse.Namespace) -> Printer:
+    """Initializes a printer for the dash application. 
+    File printer is left out as every histogram summary will be printed in a respective file."""
+    app_printers :list[Printer] = []
+    if "console" in args.output:
+        app_printers.append(ConsolePrinter())
+    app_printer :Printer = CompositePrinter(app_printers)
+
+    return app_printer
+
+
+def run_statistics(data :ParticleSizesData, printer :Printer) -> tuple[float, int, dict[str, FitResult]]:
+    """Prints the measurement summary, moments, and distribution fits with KS test results.
+
+    Returns the max value, particle count, and fit results keyed by distribution
+    name, which the caller needs to build the histogram and the dash app.
+    """
+    max_value :float = find_max_value(data.sizes)
+    total_nanoparticles :int = len(data.sizes)
+    print_measurement_summary(printer, data, total_nanoparticles)
+
+    # moments
+    moments: MomentsResult = compute_moments(data.sizes)
+    print_moments_summary(printer, moments)
+
+    # fitting
+    normal_fit: FitResult = fit_normal(data.sizes)
+    lognormal_fit: FitResult = fit_lognormal(data.sizes)
+    lorentzian_fit: FitResult = fit_lorentzian(data.sizes)
+    fits : list[FitResult] = [normal_fit, lognormal_fit, lorentzian_fit]
+    fit_results_by_distribution: dict[str, FitResult] = {fit.distribution: fit for fit in fits}
+
+    # ks test
+    ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
+    print_fit_and_ks_table(printer, fits, ks_results)
+
+    return max_value, total_nanoparticles, fit_results_by_distribution, 
+
+
+def main() -> None:
+    """Entry point: initialises the app, selects a data loader, runs the statistics report,
+    then launches the dash app with the histogram.
+
+    Only data loading and statistics/app execution are wrapped in the try block below,
+    since those are the only steps that can raise an AppError; building loaders and
+    printers is pure configuration and can't fail that way.
+    """
+    initialize_application()
+    args :argparse.Namespace = parse_args()
+    data_loader : DataLoader = build_data_loader(args)
+    printer :Printer = build_printer_for_console_app(args)
 
     try:
         # data and initial measures
         data: ParticleSizesData = data_loader.load_data()
-        max_value :float = find_max_value(data.sizes)
-        total_nanoparticles :int = len(data.sizes)
-        print_measurement_summary(printer, data, total_nanoparticles)
+        max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer)
+        # closing the printer, app will need a new one
+        printer.close()
 
-        # moments
-        moments: MomentsResult = compute_moments(data.sizes)
-        print_moments_summary(printer, moments)
-
-        # fitting
-        normal_fit: FitResult = fit_normal(data.sizes)
-        lognormal_fit: FitResult = fit_lognormal(data.sizes)
-        lorentzian_fit: FitResult = fit_lorentzian(data.sizes)
-        fits : list[FitResult] = [normal_fit, lognormal_fit, lorentzian_fit]
-        # ks test
-        ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
-        print_fit_and_ks_table(printer, fits, ks_results)
-
-        # app with histogram
-        fit_results_by_distribution: dict[str, FitResult] = {fit.distribution: fit for fit in fits}
+        # prepare data for the app and run it
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
+        app_printer :Printer = build_printer_for_dash_app(args)
         app :Dash = Dash(__name__)
-        build_app(app, printer, data.sizes, histogram, fit_results_by_distribution)
+        build_app(app, app_printer, data.sizes, histogram, fit_results_by_distribution)
         app.run()
+        app_printer.close()
 
     except AppError as e:
         print(f"Error: {e.message}")
         sys.exit(1)
-    finally:
-        if isinstance(printer, FilePrinter):
-            printer.close()
 
 
 if __name__ == "__main__":

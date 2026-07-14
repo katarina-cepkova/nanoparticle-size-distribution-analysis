@@ -6,7 +6,7 @@ key design decisions in the **Nanoparticle Size Distribution Analysis Tool**.
 It draws on the project's development history to explain not just *what*
 the code does, but *why* it's structured this way.
 
-See also: **[README.md](../README.md)** · **[USER DOCUMENTATION](USER_DOC.md)**
+See also: **[README](../README.md)** · **[USER DOCUMENTATION](USER_DOC.md)** · **[STATISTICS](STATISTICS.md)**
 
 ---
 

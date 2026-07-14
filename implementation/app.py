@@ -13,10 +13,10 @@ from fitting import FitResult
 from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0
-from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, INPUT_DATA_PATH
+from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, OUTPUT_DATA_PATH, INPUT_DATA_PATH
 from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
 from file_loader import derive_dataset_label
-from printer import Printer
+from printer import Printer, FilePrinter
 from output_printing import print_histogram_summary
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
@@ -471,11 +471,18 @@ def build_app(
 
         histogram :HistogramResult = compute_histogram(
             data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
-        
         dataset_label :str = "" if not label else f"{label} "
 
         code :str = f"{dataset_label}no. {histogram_id}"
         print_histogram_summary(printer, histogram, code)
+
+        dataset_label_for_file :str = str(label)
+        if len(dataset_label_for_file) > 0:
+            dataset_label_for_file += '_'
+            
+        filename :Path = OUTPUT_DATA_PATH / f"histogram_summary_{dataset_label_for_file}v_{histogram_id}.txt"
+        version_printer :Printer = FilePrinter(filename)
+        print_histogram_summary(version_printer, histogram, code)
         return n_clicks
 
 

@@ -216,7 +216,7 @@ rather than a judgment call made by eye.
 | What you get | Answers |
 |---|---|
 | Moments (mean, median, spread, skewness, CV, PDI, D32) | "What does this batch of particles look like, without assuming any particular shape?" |
-| Fitted parameters ($\mu$/$\sigma$ or $x_0$/$\gamma$) and FWHM per curve | "What theoretical curve best matches this data, and how wide/positioned is it?" |
+| Fitted parameters (μ/σ or x₀/γ) and FWHM per curve | "What theoretical curve best matches this data, and how wide/positioned is it?" |
 | KS test statistic and p-value per curve | "Is that fitted curve actually a statistically defensible description of the data, or should it be rejected?" |
 
 Every one of these values is computed once by the program and reused

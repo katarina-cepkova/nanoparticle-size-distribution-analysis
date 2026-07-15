@@ -20,6 +20,7 @@ from histogram import HistogramResult, compute_histogram, find_max_value
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter, CompositePrinter
 from app import build_app
+from csv_output import write_histogram_to_csv
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,6 +48,13 @@ def parse_args() -> argparse.Namespace:
         "--output-file",
         default=summary_file_path,
         help="Path to the statistic report file, used only when 'file' is included in --output."
+    )
+    parser.add_argument(
+        "--format",
+        nargs="+",
+        choices=["txt", "csv"],
+        default=["txt", "csv"],
+        help="File fomrat(s) for the report, used only when 'file' is included in --output (default: both)."
     )
     return parser.parse_args()
 
@@ -125,25 +133,24 @@ def main() -> None:
     args :argparse.Namespace = parse_args()
     data_loader : DataLoader = build_data_loader(args)
     printer :Printer = build_printer_for_console_app(args)
+    app_printer :Printer = build_printer_for_dash_app(args)
 
     try:
         # data and initial measures
         data: ParticleSizesData = data_loader.load_data()
         max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer)
-        # closing the printer, app will need a new one
-        printer.close()
-
-        # prepare data for the app and run it
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
-        app_printer :Printer = build_printer_for_dash_app(args)
+
         app :Dash = Dash(__name__)
-        build_app(app, app_printer, data.sizes, histogram, fit_results_by_distribution)
+        build_app(app, app_printer, data.sizes, histogram, fit_results_by_distribution, "file" in args.output, args.format)
         app.run()
-        app_printer.close()
 
     except AppError as e:
         print(f"Error: {e.message}")
         sys.exit(1)
+    finally:
+        printer.close()
+        app_printer.close()
 
 
 if __name__ == "__main__":

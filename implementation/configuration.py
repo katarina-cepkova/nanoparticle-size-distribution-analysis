@@ -12,13 +12,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # loading environment variables regardless of the current working directory
 load_dotenv(dotenv_path=PROJECT_ROOT / '.env')
 
+# input
 SEPARATOR :str = os.getenv('SEPARATOR', '---')
 END_OF_INPUT :str = os.getenv('END_OF_INPUT', 'END')
-
 CSV_PARTICLE_COLUMN_NAME :str = os.getenv('CSV_PARTICLE_COLUMN_NAME', 'Length')
 XLSX_PARTICLE_COLUMN_INDEX :int = int(os.getenv('XLSX_PARTICLE_COLUMN_INDEX', -1))  # default to -1 if not set
-
 INPUT_DATA_PATH :Path = PROJECT_ROOT / os.getenv('INPUT_DATA_PATH', 'data/input_data')
+
+# output and export
 OUTPUT_DATA_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_DATA_PATH', 'data/output_data')
 OUTPUT_GRAPH_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_GRAPH_PATH', 'data/output_data/graphs')
 OUTPUT_GRAPH_NAME_PREFIX :str = os.getenv('OUTPUT_GRAPH_NAME_PREFIX', 'histogram')
@@ -26,8 +27,12 @@ PNG_EXPORT_WIDTH_IN_PIXELS :int = int(os.getenv('PNG_EXPORT_WIDTH_IN_PIXELS', 16
 PNG_EXPORT_HEIGHT_IN_PIXELS :int = int(os.getenv('PNG_EXPORT_HEIGHT_IN_PIXELS', 900))
 PNG_EXPORT_SCALE :int = int(os.getenv('PNG_EXPORT_SCALE', 2))
 
+OUTPUT_HISTOGRAM_CSV_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_CSV_PATH', 'data/output_data/csv_histogram')
+OUTPUT_HISTOGRAM_TXT_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_TXT_PATH', 'data/output_data/txt_histogram')
+
 LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 
+# formatting and defaults
 DECIMAL_PLACES :int = int(os.getenv('DECIMAL_PLACES', 6))
 PERCENTAGE_DECIMAL_PLACES :int = int(os.getenv('PERCENTAGE_DECIMAL_PLACES', 2))
 ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
@@ -40,6 +45,8 @@ def _setup_directories() -> None:
     INPUT_DATA_PATH.mkdir(parents=True, exist_ok=True)
     OUTPUT_DATA_PATH.mkdir(parents=True, exist_ok=True)
     OUTPUT_GRAPH_PATH.mkdir(parents=True, exist_ok=True)
+    OUTPUT_HISTOGRAM_CSV_PATH.mkdir(parents=True, exist_ok=True)
+    OUTPUT_HISTOGRAM_TXT_PATH.mkdir(parents=True, exist_ok=True)
 
     # create a directory for logs if it doesn't exist
     LOG_DIR.mkdir(exist_ok=True)

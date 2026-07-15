@@ -14,10 +14,12 @@ from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0
 from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, OUTPUT_DATA_PATH, INPUT_DATA_PATH
+from configuration import OUTPUT_HISTOGRAM_CSV_PATH, OUTPUT_HISTOGRAM_TXT_PATH
 from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
 from file_loader import derive_dataset_label
 from printer import Printer, FilePrinter
 from output_printing import print_histogram_summary
+from csv_output import write_histogram_to_csv
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
@@ -284,7 +286,9 @@ def build_app(
         printer: Printer, 
         data: np.ndarray, 
         initial_histogram: HistogramResult, 
-        fits: dict[str, FitResult]
+        fits: dict[str, FitResult],
+        output_in_file: bool,
+        output_formats: list[str]
     ) -> None:
     """Builds the page layout (graph, button panel, bin-width slider)."""
     app.layout = _build_layout(initial_histogram)
@@ -471,18 +475,27 @@ def build_app(
 
         histogram :HistogramResult = compute_histogram(
             data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
+        
+        # print readable histogram summary
         dataset_label :str = "" if not label else f"{label} "
-
         code :str = f"{dataset_label}no. {histogram_id}"
-        print_histogram_summary(printer, histogram, code)
+        print_histogram_summary(printer, histogram, code)  # console or empty printer
 
-        dataset_label_for_file :str = str(label)
-        if len(dataset_label_for_file) > 0:
-            dataset_label_for_file += '_'
+        if output_in_file:
+            dataset_label_for_file :str = str(label)
+            if len(dataset_label_for_file) > 0:
+                dataset_label_for_file += '_'
+            base_filename :str = f"histogram_summary_{dataset_label_for_file}v_{histogram_id}"
             
-        filename :Path = OUTPUT_DATA_PATH / f"histogram_summary_{dataset_label_for_file}v_{histogram_id}.txt"
-        version_printer :Printer = FilePrinter(filename)
-        print_histogram_summary(version_printer, histogram, code)
+            if "txt" in output_formats:
+                # print readable histogram summary in a file
+                version_printer :Printer = FilePrinter(OUTPUT_HISTOGRAM_TXT_PATH / f"{base_filename}.txt")
+                print_histogram_summary(version_printer, histogram, code)
+                version_printer.close()
+            
+            if "csv" in output_formats:
+                write_histogram_to_csv(histogram, OUTPUT_HISTOGRAM_CSV_PATH / f"{base_filename}.csv")
+
         return n_clicks
 
 

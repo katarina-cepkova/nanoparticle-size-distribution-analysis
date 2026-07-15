@@ -290,7 +290,7 @@ def build_app(
         output_in_file: bool,
         output_formats: list[str]
     ) -> None:
-    """Builds the page layout (graph, button panel, bin-width slider)."""
+    """Sets the page layout and registers all Dash callbacks (histogram updates, color picker, PNG/print export, curve toggles)."""
     app.layout = _build_layout(initial_histogram)
     label :str | None = derive_dataset_label(INPUT_DATA_PATH)
 
@@ -449,6 +449,7 @@ def build_app(
         prevent_initial_call=True,
     )
     def save_histogram_png(n_clicks: int, figure_data: dict, histogram_id: int) -> int:
+        """Exports the current histogram figure to a PNG file under OUTPUT_GRAPH_PATH."""
         if not n_clicks:
             raise PreventUpdate
 
@@ -470,6 +471,7 @@ def build_app(
         prevent_initial_call=True
     )
     def print_histogram_data(n_clicks: int, bin_width_slider: float, histogram_id: int) -> int:
+        """Prints the histogram summary to the console and, if enabled, writes it to txt/csv files."""
         if not n_clicks:
             raise PreventUpdate
 

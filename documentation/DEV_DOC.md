@@ -43,7 +43,8 @@ moments.py, statistics_helpers.py
 histogram_visual.py, colors.py,         (presentation)
 color_utils.py, font_sizes.py
         ↓
-output_printing.py, printer.py          (report output)
+output_printing.py, printer.py,         (report output)
+csv_output.py
         ↓
 app.py                                  (Dash wiring / UI callbacks)
         ↓
@@ -84,6 +85,10 @@ main.py
   |  print_fit_and_ks_table(printer, ...)
   │     → written via Printer (console/file/both)
   |
+  ├─ write_statistics_csv(...) — only if "csv" in --format and
+  |     "file" in --output
+  │     → single-row CSV, independent of Printer (see §4.7)
+  |
   └─ build_app(...) + app.run()
         → hands control to Dash (see §7 for the callbacks that take over)
 ```
@@ -112,6 +117,7 @@ interactive chart.
 | `colors.py` / `color_utils.py` | Color palettes and color-derived styling (luminance-based border/text contrast) |
 | `printer.py` | `Printer` ABC with `ConsolePrinter`, `FilePrinter`, and `CompositePrinter` implementations |
 | `output_printing.py` | Formats and prints the statistical report tables using a `Printer` |
+| `csv_output.py` | `write_histogram_to_csv()` / `write_statistics_csv()` — machine-readable exports (one row per bin; one row of moments/fit/KS results), independent of the `Printer` mechanism |
 | `app.py` | Builds the Dash layout and wires up all callbacks (bin width, color, curve toggles, PNG export, axis pan/zoom/reset) |
 | `main.py` | Composition root: parses CLI args, selects a data loader, builds printers, runs the full analysis pipeline, launches the Dash app |
 
@@ -120,6 +126,24 @@ interactive chart.
 > binary the first time the app runs (needed for PNG export). This
 > requires internet access on that first run; subsequent runs reuse the
 > already-downloaded binary and work fully offline.
+
+### 3.1 Data folder structure
+
+```
+data/
+├── sample_data/          example dataset(s) shipped with the project
+├── input_data/           user's own CSV/Excel files (INPUT_DATA_PATH)
+└── output_data/          (OUTPUT_DATA_PATH)
+    ├── graphs/           exported PNG charts (OUTPUT_GRAPH_PATH)
+    ├── txt_histograms/   per-version .txt histogram summaries (OUTPUT_HISTOGRAM_TXT_PATH)
+    └── csv_histograms/   per-version .csv histogram exports (OUTPUT_HISTOGRAM_CSV_PATH)
+```
+
+The main statistics report (`--output-txt-file`/`--output-csv-file`)
+is written directly under `output_data/`, not into `txt_histograms/` or
+`csv_histograms/` — those two are populated exclusively by the
+"Print Histogram Info" button in the running app (see §7), one file per
+`histogram_id`, so earlier snapshots are never overwritten.
 
 ---
 
@@ -245,6 +269,37 @@ made the x-axis appear "stuck" regardless of the bin width slider.
 Fit curves are then drawn out to this same rounded `x_max`, so they don't
 visually stop short of the last bar.
 
+### 4.7 CSV export is a separate mechanism from `Printer`, not a `Printer` implementation
+
+`write_histogram_to_csv()` and `write_statistics_csv()` (`csv_output.py`)
+take a `Path` and write directly with `csv.writer`, rather than being
+another `Printer` subclass. This is deliberate: `Printer.print()`'s
+contract is "one line of text at a time," which fits a human-readable
+report, but not a CSV file, where the histogram export is one row per
+bin and the statistics export is a single row built from many fields
+computed elsewhere (moments, all three fits, all three KS results)
+flattened into distribution-prefixed columns (e.g. `lognormal_mu`,
+`lognormal_ks_pvalue`) so the three fits don't collide in one row.
+Because these functions have no `Printer` parameter at all, sending a
+CSV export to the console isn't just discouraged by convention — it's
+not something the API allows, since a CSV file (unlike a readable
+summary) isn't meant for on-screen reading; it's an input format for
+other tools.
+
+This is also why CSV output is controlled by its own `--format` flag,
+independent of `--output`: `--output` decides *where* the human-readable
+report goes (console/file), while `--format` decides *which file
+format(s)* get written, and only ever applies to the file side of
+`--output` — there's no equivalent of "print CSV to the console."
+
+Both CSV writers create their own parent directory
+(`path.parent.mkdir(parents=True, exist_ok=True)`) before opening the
+file, since `--output-txt-file`/`--output-csv-file` can point anywhere,
+not just inside the directories `_setup_directories()` already created.
+
+**Looking ahead:** since the CSV export already contains every value the
+program computes, in a structured, columnar form, it's a natural
+candidate to later become an *input* format for other tools.
 
 ---
 
@@ -288,7 +343,7 @@ each one and what it's responsible for — useful before adding a seventh:
 | `select_color` | `{type: color-swatch}.n_clicks` (pattern-matching) | `color-picker.data` | Sets the selected color to whichever swatch was clicked |
 | `toggle_color_panel` | `change-color-button.n_clicks` | `color-panel.style` | Shows/hides the popover color grid, alternating on click count |
 | `save_histogram_png` | `save-button.n_clicks` | `save-button.n_clicks` (self, to satisfy Dash's one-output-per-callback-input rule) | Exports the current figure to PNG via Kaleido |
-| `print_histogram_data` | `print-info-button.n_clicks` | `print-info-button.n_clicks` (same self-output pattern) | Recomputes the histogram at the current bin width and prints its summary |
+| `print_histogram_data` | `print-info-button.n_clicks` | `print-info-button.n_clicks` (same self-output pattern) | Recomputes the histogram at the current bin width; prints its summary via `printer` (console or nothing, per `--output`), and if `output_in_file`, writes it to `txt_histograms/`/`csv_histograms/` per `output_formats` (see §4.7) |
 | `toggle_curve` | `{type: curve-toggle}.n_clicks` (pattern-matching) | `active-curves.data` | Adds/removes the clicked curve's key from the active list |
 | `highlight_active_curves` | `active-curves.data` | `curve-toggle-panel.children` | Redraws the curve-toggle buttons so active ones are colored |
 

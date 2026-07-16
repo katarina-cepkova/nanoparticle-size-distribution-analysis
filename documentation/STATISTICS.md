@@ -222,5 +222,10 @@ rather than a judgment call made by eye.
 Every one of these values is computed once by the program and reused
 everywhere it's displayed (in the printed report and in the interactive
 chart) — see
-[§4.1 of the Developer Guide](DEVELOPER_GUIDE.md#41-computation-returns-dataclasses-not-tuples-or-dicts)
+[§4.1 of the Developer Documentation](DEV_DOC.md#41-computation-returns-dataclasses-not-tuples-or-dicts)
 for how that's structured in code.
+
+All of these values are also available as a machine-readable CSV export
+(one row, one column per value — see `--format csv` in the
+[Cheatsheet](CHEATSHEET.md)), if you want to load them into Excel,
+pandas, or another analysis tool instead of just reading the report.

@@ -41,14 +41,18 @@ python main.py
 |---|---|---|---|
 | `--source` | `console`, `file` | `file` | Where measurements come from |
 | `--output` | `console`, `file` (one or both) | `console file` | Where the report is written |
-| `--output-file` | any path | auto-generated | Custom report file path (needs `file` in `--output`) |
+| `--output-txt-file` | any path | auto-generated | Custom path for the `.txt` report (needs `file` in `--output` and `txt` in `--format`) |
+| `--output-csv-file` | any path | auto-generated | Custom path for the `.csv` report (needs `file` in `--output` and `csv` in `--format`) |
+| `--format` | `txt`, `csv` (one or both) | `txt` | Which file format(s) to write, when `file` is included in `--output` |
 
 ```bash
 # common examples
-python main.py --output console                 # skip the report file
-python main.py --source console                  # type measurements in by hand
-python main.py --output-file my_results.txt       # custom report filename
-python main.py --source console --output file     # type data in, only save to file
+python main.py --output console                        # skip the report file entirely
+python main.py --source console                          # type measurements in by hand
+python main.py --format csv                               # only write the CSV report, not txt
+python main.py --format txt csv                           # write both txt and csv reports
+python main.py --output-csv-file my_results.csv           # custom CSV report filename
+python main.py --source console --output file             # type data in, only save to file
 ```
 
 ## Checking Python is installed
@@ -88,6 +92,6 @@ The printed local address does **not** open automatically:
 | Show/hide a fit curve | Click its toggle button |
 | Change bar color | **Change color** → pick a swatch |
 | Export current chart | **Save PNG** |
-| Print current view's summary | **Print Histogram Info** |
+| Print current view's summary | **Print Histogram Info** — writes to console (or nothing, per `--output`) plus `.txt`/`.csv` per `--format`, into `data/output_data/txt_histograms/` and `data/output_data/csv_histograms/` |
 | Zoom/pan one axis | Hover the axis edge until the cursor becomes `↔`/`↕`, then drag — or click once and type an exact number |
 | Reset zoom/pan | **Reset axes** control on the chart |

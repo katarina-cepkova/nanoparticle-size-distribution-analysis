@@ -19,7 +19,9 @@ particle size measurements (in nanometers). It will:
 - Open an interactive chart in your web browser, where you can adjust bin
   width, toggle fit curves on and off, change colors, and export the chart
   as a PNG image
-- Print a full text report to the console and/or a file
+- Print a full report to the console and/or a file, as plain text and/or
+  CSV (the CSV is meant for loading into Excel, pandas, or another
+  analysis tool, not for reading directly)
 
 ---
 
@@ -149,7 +151,9 @@ box — but here's what each setting controls, if you want to customize it:
 | `INPUT_DATA_PATH` | `data/input_data` | The folder the program scans for your CSV/Excel files (used with `--source file`, see below). |
 | `CSV_COLUMN_NAME` | `Length` | The column header in your CSV files that contains the particle size measurements. Change this if your CSV uses a different column name. |
 | `XLSX_COLUMN_INDEX` | `-1` | Which column in your Excel files holds the measurements, counted from the left starting at 0. `-1` means "the last column." |
-| `OUTPUT_DATA_PATH` | `data/output_data` | Where the text report is saved (when writing to a file — see `--output` below). |
+| `OUTPUT_DATA_PATH` | `data/output_data` | Where the text/CSV statistics report is saved (when writing to a file — see `--output` below). |
+| `OUTPUT_HISTOGRAM_TXT_PATH` | `data/output_data/txt_histograms` | Where `.txt` histogram summaries go each time you click **Print Histogram Info** in the chart. |
+| `OUTPUT_HISTOGRAM_CSV_PATH` | `data/output_data/csv_histograms` | Where `.csv` histogram exports go each time you click **Print Histogram Info** in the chart — one row per bin, suitable for opening in Excel or feeding into another analysis tool. |
 | `OUTPUT_GRAPH_PATH` | `data/output_data/graphs` | Where exported PNG chart images are saved. |
 | `OUTPUT_GRAPH_NAME_PREFIX` | `histogram` | The prefix used in exported PNG filenames. |
 | `PNG_EXPORT_WIDTH_IN_PIXELS` | `1600` | Width of exported PNG chart images. |
@@ -160,6 +164,24 @@ box — but here's what each setting controls, if you want to customize it:
 | `PERCENTAGE_DECIMAL_PLACES` | `2` | How many decimal places are shown for percentage values in the printed report. |
 | `ALPHA` | `0.05` | The significance level used in the Kolmogorov–Smirnov goodness-of-fit test (standard statistical convention; leave as-is unless you have a specific reason to change it). |
 | `BIN_WIDTH` | `0.25` | The starting bin width (in nanometers) for the histogram when the interactive chart first opens. You can still adjust this with the slider afterward. |
+
+The `data/` folder (all paths above are relative to it, and to your
+project root) is organized like this:
+
+```
+data/
+├── sample_data/          example dataset(s) shipped with the project
+├── input_data/           your own CSV/Excel files go here
+└── output_data/
+    ├── graphs/           exported PNG charts
+    ├── txt_histograms/   .txt histogram summaries (from "Print Histogram Info")
+    └── csv_histograms/   .csv histogram exports (from "Print Histogram Info")
+```
+
+The main statistics report (`.txt`/`.csv`, from `--output`/`--format`
+below) is written directly under `output_data/`, not into either
+histogram subfolder — those two subfolders are specifically for the
+per-view snapshots you generate by clicking the chart's button.
 
 ---
 
@@ -201,7 +223,9 @@ You can customize how it runs by adding switches after `python main.py`:
 |---|---|---|---|
 | `--source` | `console`, `file` | `file` | Where particle measurements come from: `file` reads your CSV/Excel files; `console` lets you type measurements in directly. |
 | `--output` | `console`, `file` (one or both, space-separated) | `console file` | Where the printed report goes. |
-| `--output-file` | any file path | auto-generated name in your output folder | Custom name/location for the report file (only relevant if `file` is included in `--output`). |
+| `--format` | `txt`, `csv` (one or both, space-separated) | `txt` | Which file format(s) the report is written in — only relevant if `file` is included in `--output`. `csv` produces a single machine-readable row (all moments and fit/KS results as columns), useful if you want to load the results into Excel, pandas, or another analysis tool rather than just read them. |
+| `--output-txt-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.txt` report (only relevant if `file` is in `--output` and `txt` is in `--format`). |
+| `--output-csv-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.csv` report (only relevant if `file` is in `--output` and `csv` is in `--format`). |
 
 **Examples:**
 
@@ -221,9 +245,15 @@ the chart's axis (see §10), only the `.` format is accepted, since that's
 a browser input field, not this program's own console parsing.
 
 
-Save the report to a specific file:
+Write the report as CSV instead of (or alongside) the default `.txt`:
 ```
-python main.py --output-file my_results.txt
+python main.py --format csv          # csv only
+python main.py --format txt csv      # both
+```
+
+Save the CSV report to a specific file:
+```
+python main.py --format csv --output-csv-file my_results.csv
 ```
 
 ---
@@ -250,7 +280,10 @@ From there you can:
 - Click **Change color** to pick a different bar color
 - Click **Save PNG** to export the current chart as an image
 - Click **Print Histogram Info** to print a summary of the current view
-  to your chosen output (console/file)
+  to the console (if enabled) and, if `file` is in `--output`, write it
+  as `.txt`/`.csv` (per `--format`) into `txt_histograms/`/
+  `csv_histograms/` — each click creates its own file, one per histogram
+  version, so earlier views aren't overwritten
 - Zoom, pan, and use the **Reset axes** control on the chart itself. To
   change just one axis's range, move your cursor to the very edge of
   that axis (the numbers along the bottom or the left side) until the

@@ -45,6 +45,7 @@ class FilePrinter(Printer):
 
     def __init__(self, path: Path) -> None:
         self.path :Path = path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         self._file :TextIO = open(path, "w", encoding="utf-8")
 
 

@@ -20,14 +20,14 @@ from histogram import HistogramResult, compute_histogram, find_max_value
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter, CompositePrinter
 from app import build_app
-from csv_output import write_histogram_to_csv
+from csv_output import write_histogram_to_csv, write_statistics_csv
 
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
     dataset_label : str | None = derive_dataset_label(INPUT_DATA_PATH)
     summary_prefix : str = "stat_summary"
-    summary_filename :str = f"{summary_prefix}_{dataset_label}.txt" if dataset_label else f"{summary_prefix}.txt"
+    summary_filename :str = f"{summary_prefix}_{dataset_label}" if dataset_label else summary_prefix
     summary_file_path :Path = OUTPUT_DATA_PATH / summary_filename
 
     parser :argparse.ArgumentParser = argparse.ArgumentParser(description="Nanoparticle size distribution analysis tool")
@@ -45,16 +45,23 @@ def parse_args() -> argparse.Namespace:
         help="Where to write the report: 'console', 'file', or both (default: both).",
     )
     parser.add_argument(
-        "--output-file",
-        default=summary_file_path,
+        "--output-txt-file",
+        type=Path,
+        default=OUTPUT_DATA_PATH / f"{summary_file_path}.txt",
         help="Path to the statistic report file, used only when 'file' is included in --output."
+    )
+    parser.add_argument(
+        "--output-csv-file",
+        type=Path,
+        default=OUTPUT_DATA_PATH / f"{summary_file_path}.csv",
+        help="Path to the statistic report file in csv format, used only when 'file' is included in --output."
     )
     parser.add_argument(
         "--format",
         nargs="+",
         choices=["txt", "csv"],
-        default=["txt", "csv"],
-        help="File fomrat(s) for the report, used only when 'file' is included in --output (default: both)."
+        default=["txt"],
+        help="File fomrat(s) for the report, used only when 'file' is included in --output (default: txt)."
     )
     return parser.parse_args()
 
@@ -76,7 +83,7 @@ def build_printer_for_console_app(args :argparse.Namespace) -> Printer:
     if "console" in args.output:
         printers.append(ConsolePrinter())
     if "file" in args.output:
-        printers.append(FilePrinter(args.output_file))
+        printers.append(FilePrinter(args.output_txt_file))
 
     printer :Printer = CompositePrinter(printers)
     return printer
@@ -93,7 +100,7 @@ def build_printer_for_dash_app(args :argparse.Namespace) -> Printer:
     return app_printer
 
 
-def run_statistics(data :ParticleSizesData, printer :Printer) -> tuple[float, int, dict[str, FitResult]]:
+def run_statistics(data :ParticleSizesData, printer :Printer, args: argparse.Namespace) -> tuple[float, int, dict[str, FitResult]]:
     """Prints the measurement summary, moments, and distribution fits with KS test results.
 
     Returns the max value, particle count, and fit results keyed by distribution
@@ -118,7 +125,11 @@ def run_statistics(data :ParticleSizesData, printer :Printer) -> tuple[float, in
     ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
     print_fit_and_ks_table(printer, fits, ks_results)
 
-    return max_value, total_nanoparticles, fit_results_by_distribution, 
+    # print statistic results in csv if selected
+    if "file" in args.output and "csv" in args.format:
+        write_statistics_csv(args.output_csv_file, moments, fits, ks_results)
+        
+    return max_value, total_nanoparticles, fit_results_by_distribution
 
 
 def main() -> None:
@@ -138,7 +149,7 @@ def main() -> None:
     try:
         # data and initial measures
         data: ParticleSizesData = data_loader.load_data()
-        max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer)
+        max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer, args)
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
 
         app :Dash = Dash(__name__)

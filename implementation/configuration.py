@@ -7,7 +7,7 @@ import flask.cli
 import kaleido
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT :Path = Path(__file__).resolve().parent.parent
 
 # loading environment variables regardless of the current working directory
 load_dotenv(dotenv_path=PROJECT_ROOT / '.env')
@@ -36,7 +36,7 @@ LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 DECIMAL_PLACES :int = int(os.getenv('DECIMAL_PLACES', 6))
 PERCENTAGE_DECIMAL_PLACES :int = int(os.getenv('PERCENTAGE_DECIMAL_PLACES', 2))
 ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statistical tests
-BIN_WIDTH_IN_NM : float = float(os.getenv('BIN_WIDTH_IN_NM', 0.25))
+BIN_WIDTH_IN_NM :float = float(os.getenv('BIN_WIDTH_IN_NM', 0.25))
 
 
 def _setup_directories() -> None:
@@ -64,14 +64,14 @@ def _setup_logging() -> None:
     # handler for console output - user-friendly messages
     console_handler :StreamHandler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
-    console_formatter = logging.Formatter('%(message)s')
+    console_formatter :logging.Formatter = logging.Formatter('%(message)s')
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
 
     # handler for file output - detailed logs
     file_handler :FileHandler = logging.FileHandler(LOG_DIR / 'app.log')
     file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_formatter :logging.Formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)   
     logger.addHandler(file_handler)
 

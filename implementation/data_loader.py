@@ -16,9 +16,9 @@ class ParticleSizesData:
     `counts` maps each source name (filename or 'input_N') to the number of
     measurements contributed by that source.
     """
-    sizes: np.ndarray
-    counts: dict[str, int]
-    total_count: int
+    sizes :np.ndarray
+    counts :dict[str, int]
+    total_count :int
 
 
 class DataLoader(ABC):
@@ -50,7 +50,7 @@ class ConsoleLoader(DataLoader):
         """Reads lines from stdin until end_of_input; separator lines delimit measurement groups."""
         self._print_user_instructions()
 
-        sizes: list[float] = []
+        sizes :list[float] = []
         counts :dict[str, int] = {}
 
         count :int = 0       # measurements in the current group
@@ -100,7 +100,7 @@ class DirectoryLoader(DataLoader):
         elif file_path.suffix.lower() in ['.xlsx', '.xls']:
             return ExcelFileLoader(file_path, self.particle_column_index)
         else:
-            er = UnsupportedFileTypeError(file_path)
+            er :UnsupportedFileTypeError = UnsupportedFileTypeError(file_path)
             logging.error(er.message)
             raise er
 
@@ -108,7 +108,7 @@ class DirectoryLoader(DataLoader):
     def load_data(self) -> ParticleSizesData:
         sizes :list[float] = []
         counts :dict[str, int] = {}
-        invalid_files : list[str] = []
+        invalid_files :list[str] = []
 
         for path in self.file_paths:
             file_loader :FileLoader = self._create_loader(path)

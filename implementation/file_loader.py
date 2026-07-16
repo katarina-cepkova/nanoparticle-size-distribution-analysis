@@ -15,14 +15,14 @@ import logging
 from domain_errors import InvalidFileFormatError, MissingColumnError, EmptyMeasurementsError
 
 
-def derive_dataset_label(input_data_path: Path) -> str | None:
+def derive_dataset_label(input_data_path: Path) -> str:
     """Returns the subfolder name if input_data contains exactly one child, and it's a folder."""
-    children = [p for p in input_data_path.iterdir() if not p.name.startswith(".")]
+    children :list[Path] = [p for p in input_data_path.iterdir() if not p.name.startswith(".")]
 
     if len(children) == 1 and children[0].is_dir():
         return children[0].name
 
-    return None
+    return ""
 
 
 class FileLoader(ABC):
@@ -111,8 +111,8 @@ class ExcelFileLoader(FileLoader):
     """Loads particle sizes from a single XLSX file."""
 
     def __init__(self, input_file: Path, particle_column_index: int) -> None:
-        self.input_file : Path = input_file
-        self.particle_column_index : int = particle_column_index
+        self.input_file :Path = input_file
+        self.particle_column_index :int = particle_column_index
 
 
     def _load_excel_to_dataframe(self) -> pd.DataFrame:
@@ -149,7 +149,7 @@ class ExcelFileLoader(FileLoader):
             df :pd.DataFrame = self._load_excel_to_dataframe()
             data :pd.Series = df.iloc[:, self.particle_column_index].dropna()
             try:
-                sizes : np.ndarray = data.astype(str).str.replace(',', '.').astype(np.float64).to_numpy()
+                sizes :np.ndarray = data.astype(str).str.replace(',', '.').astype(np.float64).to_numpy()
             except ValueError as e:
                 raise InvalidFileFormatError(self.input_file) from e  # column contains non-numeric values
             

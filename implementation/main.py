@@ -25,8 +25,8 @@ from csv_output import write_histogram_to_csv, write_statistics_csv
 
 def parse_args() -> argparse.Namespace:
     """Parses and returns CLI arguments."""
-    dataset_label : str | None = derive_dataset_label(INPUT_DATA_PATH)
-    summary_prefix : str = "stat_summary"
+    dataset_label :str = derive_dataset_label(INPUT_DATA_PATH)
+    summary_prefix :str = "stat_summary"
     summary_filename :str = f"{summary_prefix}_{dataset_label}" if dataset_label else summary_prefix
     summary_file_path :Path = OUTPUT_DATA_PATH / summary_filename
 
@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_data_loader(args :argparse.Namespace) -> DataLoader:
+def build_data_loader(args: argparse.Namespace) -> DataLoader:
     """Builds the data loader (console or directory) selected by the --source argument."""
     data_loader :DataLoader
     if args.source == "console":
@@ -76,7 +76,7 @@ def build_data_loader(args :argparse.Namespace) -> DataLoader:
     return data_loader
 
 
-def build_printer_for_console_app(args :argparse.Namespace) -> Printer:
+def build_printer_for_console_app(args: argparse.Namespace) -> Printer:
     """Builds the composite printer for the initial statistics report, combining console 
     and/or file printers per the --output argument."""
     printers :list[Printer] = []
@@ -89,7 +89,7 @@ def build_printer_for_console_app(args :argparse.Namespace) -> Printer:
     return printer
 
 
-def build_printer_for_dash_app(args :argparse.Namespace) -> Printer:
+def build_printer_for_dash_app(args: argparse.Namespace) -> Printer:
     """Initializes a printer for the dash application. 
     File printer is left out as every histogram summary will be printed in a respective file."""
     app_printers :list[Printer] = []
@@ -100,7 +100,7 @@ def build_printer_for_dash_app(args :argparse.Namespace) -> Printer:
     return app_printer
 
 
-def run_statistics(data :ParticleSizesData, printer :Printer, args: argparse.Namespace) -> tuple[float, int, dict[str, FitResult]]:
+def run_statistics(data: ParticleSizesData, printer: Printer, args: argparse.Namespace) -> tuple[float, int, dict[str, FitResult]]:
     """Prints the measurement summary, moments, and distribution fits with KS test results.
 
     Returns the max value, particle count, and fit results keyed by distribution
@@ -111,15 +111,15 @@ def run_statistics(data :ParticleSizesData, printer :Printer, args: argparse.Nam
     print_measurement_summary(printer, data, total_nanoparticles)
 
     # moments
-    moments: MomentsResult = compute_moments(data.sizes)
+    moments :MomentsResult = compute_moments(data.sizes)
     print_moments_summary(printer, moments)
 
     # fitting
-    normal_fit: FitResult = fit_normal(data.sizes)
-    lognormal_fit: FitResult = fit_lognormal(data.sizes)
-    lorentzian_fit: FitResult = fit_lorentzian(data.sizes)
-    fits : list[FitResult] = [normal_fit, lognormal_fit, lorentzian_fit]
-    fit_results_by_distribution: dict[str, FitResult] = {fit.distribution: fit for fit in fits}
+    normal_fit :FitResult = fit_normal(data.sizes)
+    lognormal_fit :FitResult = fit_lognormal(data.sizes)
+    lorentzian_fit :FitResult = fit_lorentzian(data.sizes)
+    fits :list[FitResult] = [normal_fit, lognormal_fit, lorentzian_fit]
+    fit_results_by_distribution :dict[str, FitResult] = {fit.distribution: fit for fit in fits}
 
     # ks test
     ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
@@ -142,13 +142,13 @@ def main() -> None:
     """
     initialize_application()
     args :argparse.Namespace = parse_args()
-    data_loader : DataLoader = build_data_loader(args)
+    data_loader :DataLoader = build_data_loader(args)
     printer :Printer = build_printer_for_console_app(args)
     app_printer :Printer = build_printer_for_dash_app(args)
 
     try:
         # data and initial measures
-        data: ParticleSizesData = data_loader.load_data()
+        data :ParticleSizesData = data_loader.load_data()
         max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer, args)
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
 

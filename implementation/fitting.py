@@ -8,23 +8,23 @@ from statistics_helpers import compute_cv, compute_PDI
 
 @dataclass
 class FitResult:
-    distribution: str
-    params: dict[str, float]
-    loc: float
-    scale: float
+    distribution :str
+    params :dict[str, float]
+    loc :float
+    scale :float
 
-    theoretical_mode: float
-    theoretical_median: float
-    theoretical_mean: float | None
+    theoretical_mode :float
+    theoretical_median :float
+    theoretical_mean :float | None
 
-    theoretical_std: float | None
-    theoretical_cv: float | None
-    theoretical_pdi: float | None
+    theoretical_std :float | None
+    theoretical_cv :float | None
+    theoretical_pdi :float | None
 
-    fwhm: float
-    rel_fwhm: float
-    
-    log_likelihood: float
+    fwhm :float
+    rel_fwhm :float
+
+    log_likelihood :float
 
 
 def fit_lognormal(data: np.ndarray) -> FitResult:
@@ -134,7 +134,7 @@ def fit_lorentzian(data: np.ndarray) -> FitResult:
     """Fit a Lorentzian (Cauchy) distribution to data via MLE and return the result."""
     x0_hat, gamma_hat = stats.cauchy.fit(data)  # x0: peak position, gamma: half-width at half-maximum
 
-    theoretical_mode: float = float(x0_hat)  # theoretical_mode of Cauchy distribution is the peak position
+    theoretical_mode :float = float(x0_hat)  # theoretical_mode of Cauchy distribution is the peak position
 
     if theoretical_mode == 0:
         er :InvalidInputError = InvalidInputError("Mode of the fitted normal distribution is zero, cannot compute relative FWHM.")
@@ -147,12 +147,12 @@ def fit_lorentzian(data: np.ndarray) -> FitResult:
     theoretical_cv :float | None = compute_cv(theoretical_std, theoretical_mean)
     theoretical_pdi :float | None = compute_PDI(theoretical_cv)
     
-    fwhm: float = float(2 * gamma_hat)
-    rel_fwhm : float = fwhm / theoretical_mode
+    fwhm :float = float(2 * gamma_hat)
+    rel_fwhm :float = fwhm / theoretical_mode
 
     # loc=x0_hat: centre of the peak
     # scale=gamma_hat: half-width at half-maximum — larger → broader, heavier tails than normal
-    log_likelihood: float = float(np.sum(stats.cauchy.logpdf(data, loc=x0_hat, scale=gamma_hat)))
+    log_likelihood :float = float(np.sum(stats.cauchy.logpdf(data, loc=x0_hat, scale=gamma_hat)))
 
     return FitResult(
         distribution="lorentzian",

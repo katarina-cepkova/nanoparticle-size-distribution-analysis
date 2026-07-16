@@ -6,7 +6,7 @@ from fitting import FitResult
 from ks_test import KSTestResult
 
 
-def write_histogram_to_csv(histogram :HistogramResult, path :Path) -> None:
+def write_histogram_to_csv(histogram: HistogramResult, path: Path) -> None:
     """Writes one row per bin: edges, count, and percentage."""
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)

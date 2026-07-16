@@ -29,23 +29,23 @@ from color_utils import hex_to_rgba, text_color_with_bg_color, border_style_for
 
 
 # color picker grid layout
-COLOR_CELL_SIZE = "24px"
-COLOR_GRID_COLUMNS = 13
+COLOR_CELL_SIZE :str = "24px"
+COLOR_GRID_COLUMNS :int = 13
 
 # color picker swatch/panel styling
-SWATCH_UNSELECTED_BORDER_OPACITY: float = 0.25
-SEPARATOR_BORDER_OPACITY: float = 0.15
-PANEL_SHADOW_OPACITY: float = 0.12
+SWATCH_UNSELECTED_BORDER_OPACITY :float = 0.25
+SEPARATOR_BORDER_OPACITY :float = 0.15
+PANEL_SHADOW_OPACITY :float = 0.12
 
-SWATCH_SELECTED_BORDER_WIDTH: str = "3px"
-SWATCH_UNSELECTED_BORDER_WIDTH: str = "1px"
+SWATCH_SELECTED_BORDER_WIDTH :str = "3px"
+SWATCH_UNSELECTED_BORDER_WIDTH :str = "1px"
 
 # bin-width slider bounds
 SLIDER_MIN :float = 0.01
 SLIDER_STEP :float = 0.01
 
 # curve toggle buttons: (key, label, active color)
-CURVE_OPTIONS: list[tuple[str, str, str]] = [
+CURVE_OPTIONS :list[tuple[str, str, str]] = [
     ("normal", "Normal", CURVE_COLORS["normal"]),
     ("lognormal", "Lognormal", CURVE_COLORS["lognormal"]),
     ("lorentzian", "Lorentzian", CURVE_COLORS["lorentzian"]),
@@ -121,7 +121,7 @@ def _build_button_panel() -> html.Div:
 
 def _color_swatch(hex_code: str, selected_color: str | None) -> html.Button:
     """Builds one clickable color swatch, outlined thicker when it's the selected color."""
-    is_selected = hex_code == selected_color
+    is_selected :bool = hex_code == selected_color
     return html.Button(
         id={"type": "color-swatch", "hex": hex_code},
         title=hex_code,
@@ -151,7 +151,7 @@ def _color_row_separator() -> html.Div:
 
 def _build_color_swatches(selected_color: str | None = None) -> list[html.Button | html.Div]:
     """Builds the full swatch list: classic colors, a separator, then the histogram palette."""
-    swatches: list[html.Button | html.Div] = [
+    swatches :list[html.Button | html.Div] = [
         _color_swatch(hex_code, selected_color) for hex_code in ORIGIN_CLASSIC_COLORS]
     swatches.append(_color_row_separator())
     swatches.extend(_color_swatch(hex_code, selected_color) for hex_code in HISTOGRAM_COLORS)
@@ -389,7 +389,7 @@ def build_app(
         # max_value is fixed by the dataset; max_percentage depends on bin width,
         # so it's recounted here and stored for the next axis reset
         stats :dict[str, float] = {"max_value": initial_histogram.max_value, "max_percentage": histogram.max_percentage}
-        new_id = histogram_id + 1
+        new_id :int = histogram_id + 1
 
         return (
             figure, 
@@ -431,7 +431,7 @@ def build_app(
         if not n_clicks:
             raise PreventUpdate
         
-        style = current_style.copy()
+        style :dict = current_style.copy()
 
         if n_clicks % 2 == 1:
             style["display"] = "block"
@@ -453,7 +453,7 @@ def build_app(
         if not n_clicks:
             raise PreventUpdate
 
-        figure = Figure(figure_data)
+        figure :Figure = Figure(figure_data)
         dataset_label :str = "" if not label else f"_{label}"
 
         filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{histogram_id}.png"
@@ -512,8 +512,8 @@ def build_app(
         if not ctx.triggered_id:
             raise PreventUpdate
         
-        curve_key = ctx.triggered_id["curve"]
-        updated = active_curves.copy()
+        curve_key :str = ctx.triggered_id["curve"]
+        updated :list[str] = active_curves.copy()
 
         if curve_key in updated:
             updated.remove(curve_key)

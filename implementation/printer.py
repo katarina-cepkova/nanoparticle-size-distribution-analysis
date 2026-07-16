@@ -62,7 +62,7 @@ class FilePrinter(Printer):
 class CompositePrinter(Printer):
     """Fans out report output to a group of Printers, e.g. console and file at once."""
 
-    def __init__(self, printers :list[Printer]) -> None:
+    def __init__(self, printers: list[Printer]) -> None:
         """Stores the Printers to fan out to."""
         self.printers :list[Printer] = printers
 

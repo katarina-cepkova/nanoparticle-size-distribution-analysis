@@ -6,8 +6,8 @@ from fitting import FitResult
 
 @dataclass
 class KSTestResult:
-    statistic: float
-    p_value: float
+    statistic :float
+    p_value :float
 
 
 def ks_test_normal(data: np.ndarray, mu: float, sigma: float) -> KSTestResult:

@@ -17,31 +17,31 @@ TICKS :str ="outside"
 TICK_LEN :int = 6
 TICK_WIDTH :int = 1
 
-FIGURE_MARGIN: dict[str, int] = dict(l=40, r=20, t=20, b=40)
+FIGURE_MARGIN :dict[str, int] = dict(l=40, r=20, t=20, b=40)
 
-AXIS_LINE_WIDTH: int = 1
-AXIS_TICK_LENGTH: int = 6
-AXIS_TICK_WIDTH: int = 1
+AXIS_LINE_WIDTH :int = 1
+AXIS_TICK_LENGTH :int = 6
+AXIS_TICK_WIDTH :int = 1
 
-X_AXIS_TITLE: str = "Nanoparticle Size (nm)"
-X_AXIS_TICK0: float = 0
-X_AXIS_DTICK: float = 0.25
-X_AXIS_TICKFORMAT: str = ".2f"
+X_AXIS_TITLE :str = "Nanoparticle Size (nm)"
+X_AXIS_TICK0 :float = 0
+X_AXIS_DTICK :float = 0.25
+X_AXIS_TICKFORMAT :str = ".2f"
 
-Y_AXIS_TITLE: str = "Relative Frequency (%)"
+Y_AXIS_TITLE :str = "Relative Frequency (%)"
 Y_AXIS_TICK0 :float = 0
-Y_AXIS_DTICK: float = 5
-Y_AXIS_TICKFORMAT: str = ".1f"
+Y_AXIS_DTICK :float = 5
+Y_AXIS_TICKFORMAT :str = ".1f"
 
-CANDIDATE_X_TICK_STEPS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
-CANDIDATE_Y_TICK_STEPS: tuple[float, ...] = (0.5, 1.0, 2.0, 2.5, 5.0, 10.0, 20.0, 25.0, 50.0, 75.0, 100.0)
-MAX_X_TICK_COUNT: int = 20  # ceiling on how many ticks are acceptable on xaxis before escalating
-MAX_Y_TICK_COUNT: int = 10 
+CANDIDATE_X_TICK_STEPS :tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0, 10.0)
+CANDIDATE_Y_TICK_STEPS :tuple[float, ...] = (0.5, 1.0, 2.0, 2.5, 5.0, 10.0, 20.0, 25.0, 50.0, 75.0, 100.0)
+MAX_X_TICK_COUNT :int = 20  # ceiling on how many ticks are acceptable on xaxis before escalating
+MAX_Y_TICK_COUNT :int = 10
 
 
 def _pick_dtick(axis_min: float, axis_max: float, tick_steps: tuple[float | int, ...], max_tick_count: int) -> float:
     """Picks the smallest candidate tick step that keeps the axis under MAX_TICK_COUNT ticks."""
-    span: float = axis_max - axis_min
+    span :float = axis_max - axis_min
 
     for step in tick_steps:
         if span / step <= max_tick_count:
@@ -66,17 +66,17 @@ def _round_up_to_dtick(value: float, dtick: float) -> float:
 
 def compute_nice_x_axis(axis_min: float, raw_max: float) -> tuple[float, float]:
     """Returns (dtick, rounded_max) so the x-axis edge lands exactly on a tick."""
-    raw_dtick = pick_x_dtick(axis_min, raw_max)
-    rounded_max = _round_up_to_dtick(raw_max, raw_dtick)
-    dtick = pick_x_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
+    raw_dtick :float = pick_x_dtick(axis_min, raw_max)
+    rounded_max :float = _round_up_to_dtick(raw_max, raw_dtick)
+    dtick :float = pick_x_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
     return dtick, rounded_max
 
 
 def compute_nice_y_axis(axis_min: float, raw_max: float) -> tuple[float, float]:
     """Returns (dtick, rounded_max) so the y-axis edge lands exactly on a tick."""
-    raw_dtick = pick_y_dtick(axis_min, raw_max)
-    rounded_max = _round_up_to_dtick(raw_max, raw_dtick)
-    dtick = pick_y_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
+    raw_dtick :float = pick_y_dtick(axis_min, raw_max)
+    rounded_max :float = _round_up_to_dtick(raw_max, raw_dtick)
+    dtick :float = pick_y_dtick(axis_min, rounded_max)  # in case the rounded_max would influence the dtick value
     return dtick, rounded_max
 
 

@@ -31,7 +31,7 @@ def print_section_header(printer: Printer, title: str, length: int = 60) -> None
     printer.print()
 
 
-def print_measurement_summary(printer: Printer, data: ParticleSizesData, total_nanoparticles :int) -> None:
+def print_measurement_summary(printer: Printer, data: ParticleSizesData, total_nanoparticles: int) -> None:
     """
     Prints a formatted table of per-source particle counts with a total row.
     """
@@ -101,7 +101,7 @@ def print_moments_summary(printer: Printer, moments: MomentsResult) -> None:
     printer.print('-' * header_width)
 
 
-def print_row(printer: Printer, label: str, values: list[float | int | str | None], col_width : int, label_width: int) -> None:
+def print_row(printer: Printer, label: str, values: list[float | int | str | None], col_width: int, label_width: int) -> None:
     """
     Prints one table row: a left-aligned label followed by one right-aligned
     cell per value. Each value is formatted according to its type:
@@ -287,7 +287,7 @@ def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: 
     print_grouped_distribution_table(printer, fits, [fit_rows, ks_rows])
 
 
-def compute_num_of_digits(bin_count :int) -> int:
+def compute_num_of_digits(bin_count: int) -> int:
     """Digit width needed to print bin numbers 1..bin_count right-aligned."""
     digits :int = 0
     remaining :int = bin_count
@@ -298,11 +298,11 @@ def compute_num_of_digits(bin_count :int) -> int:
     return digits
 
 
-def format_date_pretty(header_width :int) -> str:
+def format_date_pretty(header_width: int) -> str:
     """Formats date and time info and aligns to the right according to the header_width"""
     timestamp :str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    prefix: str = "Date and time:"
-    aligned_date: str = f"{prefix}{timestamp:>{max(header_width - len(prefix), 0)}}"
+    prefix :str = "Date and time:"
+    aligned_date :str = f"{prefix}{timestamp:>{max(header_width - len(prefix), 0)}}"
     return aligned_date
 
 
@@ -312,7 +312,7 @@ def print_histogram_summary(printer: Printer, histogram: HistogramResult, code: 
     (size range -> particle count) in one simple Metric | Value table.
     """
     bin_rows :list[Row] = []
-    digits = compute_num_of_digits(histogram.bin_count)
+    digits :int = compute_num_of_digits(histogram.bin_count)
 
     for i in range(histogram.bin_count):
         left :float = float(histogram.bin_edges[i])

@@ -74,7 +74,7 @@ def compute_histogram(data: np.ndarray, bin_width: float, max_value: float, nano
     bin_percentages :np.ndarray = compute_bin_percentages(bin_counts, nanoparticle_count)
     max_percentage :float = find_max_percentage(bin_percentages)
 
-    bin_count = len(bin_edges) - 1
+    bin_count :int = len(bin_edges) - 1
     # Index of the tallest bin, i.e. the most populated size range.
     max_bin_index :int = int(np.argmax(bin_counts))
     # empirical = calculated from the data

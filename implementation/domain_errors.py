@@ -42,3 +42,10 @@ class UnsupportedFileTypeError(AppError):
 
     def __init__(self, file_path: Path) -> None:
         super().__init__(f"The input file '{file_path.name}' has an unsupported file type.")
+
+
+class OutputPathError(AppError):
+    """Raised when a configured output path can't be opened for writing."""
+
+    def __init__(self, path: Path, reason: str) -> None:
+        super().__init__(f"Cannot write to '{path}': {reason}")

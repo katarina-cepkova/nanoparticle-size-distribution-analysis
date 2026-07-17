@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TextIO
+import logging
+from domain_errors import OutputPathError
 
 
 class Printer(ABC):
@@ -46,7 +48,13 @@ class FilePrinter(Printer):
     def __init__(self, path: Path) -> None:
         self.path :Path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._file :TextIO = open(path, "w", encoding="utf-8")
+
+        try:
+            self._file :TextIO = open(path, "w", encoding="utf-8")
+        except (IsADirectoryError, PermissionError, OSError) as e:
+            err :OutputPathError = OutputPathError(path, str(e))
+            logging.error(err.message)
+            raise err from e
 
 
     def print(self, text: str = "") -> None:

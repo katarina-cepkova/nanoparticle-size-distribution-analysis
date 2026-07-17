@@ -1,24 +1,31 @@
 import csv
+import logging
 from pathlib import Path
 from histogram import HistogramResult
 from moments import MomentsResult
 from fitting import FitResult
 from ks_test import KSTestResult
+from domain_errors import OutputPathError
 
 
 def write_histogram_to_csv(histogram: HistogramResult, path: Path) -> None:
     """Writes one row per bin: edges, count, and percentage."""
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["bin_left", "bin_right", "count", "percentage"])
+    try:
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["bin_left", "bin_right", "count", "percentage"])
 
-        for i in range(histogram.bin_count):
-            writer.writerow([
-                histogram.bin_edges[i],
-                histogram.bin_edges[i + 1],
-                histogram.bin_counts[i],
-                histogram.bin_percentages[i],
-            ])
+            for i in range(histogram.bin_count):
+                writer.writerow([
+                    histogram.bin_edges[i],
+                    histogram.bin_edges[i + 1],
+                    histogram.bin_counts[i],
+                    histogram.bin_percentages[i],
+                ])
+    except (IsADirectoryError, PermissionError, OSError) as e:
+        err :OutputPathError = OutputPathError(path, str(e))
+        logging.error(err.message)
+        raise err from e
 
 
 def write_statistics_csv(
@@ -64,7 +71,12 @@ def write_statistics_csv(
         add(f"{prefix}_ks_pvalue", ks.p_value)
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerow(values)
+    try:
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerow(values)
+    except (IsADirectoryError, PermissionError, OSError) as e:
+            err :OutputPathError = OutputPathError(path, str(e))
+            logging.error(err.message)
+            raise err from e

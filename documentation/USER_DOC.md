@@ -98,6 +98,9 @@ computer. It isn't included in the project files — create it once:
 python -m venv .venv          # Windows/macOS/Linux, run once from the project root
 ```
 
+This first-time setup can take a little while — be patient and let it
+finish rather than closing the console.
+
 Then activate it before running anything:
 
 - **Windows (PowerShell)**:
@@ -220,6 +223,13 @@ python main.py
 This uses all the defaults: reads data from your input folder, prints the
 report to both the console and a file, and opens the interactive chart in
 your browser.
+
+**The very first time you run this**, it also downloads a small headless
+browser component (used for exporting PNG charts) — this needs an
+internet connection and can take a minute or so depending on your
+connection speed. This only happens once; every run after that starts
+normally. Let it finish rather than closing the console if it seems to
+be taking a while.
 
 ### Optional command-line switches
 
@@ -362,6 +372,20 @@ crash silently. Here are the messages you might see, grouped by cause:
 - **"Mean is zero, cannot compute coefficient of variation."** — similar
   to the above; a statistic that requires dividing by the mean can't be
   computed if the mean is exactly zero.
+- **"Found ... non-positive value(s) in the measurements. Particle
+  sizes must be greater than zero."** — one or more entered/loaded
+  measurements were zero or negative. Particle sizes can't physically be
+  zero or negative — check your data (or, for `--source console`, what
+  you typed) for a stray minus sign or misplaced value.
+- **"At least 3 measurements are required, got ..."** — too few
+  measurements were provided to compute meaningful statistics (variance,
+  skewness, and distribution fitting all need a handful of data points
+  to be reliable). Add more measurements and rerun.
+- **"All measurements are identical — distribution fitting requires
+  variation in the data."** — every entered/loaded value was exactly
+  the same. This isn't necessarily wrong data, but a batch with zero
+  spread can't be fit to a distribution shape (there's nothing to fit
+  around) — double check this is really what you meant to analyze.
 **Generic errors:**
  
 - **"Error: ..."** printed just before the program exits — this is the

@@ -58,12 +58,20 @@ class CsvFileLoader(FileLoader):
             logging.error(f"Parsing error at '{self.input_file}': {e}")
             raise InvalidFileFormatError(self.input_file)
 
+        except UnicodeDecodeError as e:
+            logging.error(f"'{self.input_file}' is not UTF-8 encoded: {e}")
+            raise InvalidFileFormatError(self.input_file) from e
+
         except PermissionError:
             logging.error(f"Permission denied: '{self.input_file}'.")
             raise
 
         except OSError as e:
             logging.error(f"System-level I/O error while reading a CSV file occurred: {e}")
+            raise
+
+        except Exception as e:
+            logging.error(f"Unexpected error reading CSV content: {e}")
             raise
 
 

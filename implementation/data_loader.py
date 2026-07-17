@@ -123,8 +123,9 @@ class DirectoryLoader(DataLoader):
                     sizes.extend(particle_sizes.flatten())
                     counts[path.name] = len(particle_sizes)
 
-            except (FileNotFoundError, InvalidFileFormatError, MissingColumnError, UnsupportedFileTypeError, PermissionError) as e:
+            except Exception as e: # FileNotFoundError, InvalidFileFormatError, MissingColumnError, UnsupportedFileTypeError, PermissionError...
                 invalid_files.append(path.name)
+                logging.error(f"Skipping '{path.name}': {e}")
                 continue  # Skip to the next file
 
         # raise rather than silently return partial data — the user must fix broken files

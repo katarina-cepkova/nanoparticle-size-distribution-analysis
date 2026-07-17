@@ -115,7 +115,13 @@ def build_printer_for_dash_app(args: argparse.Namespace) -> Printer:
 
 
 def validate_particle_sizes(data: ParticleSizesData) -> None:
-    """Ensures every measurement is a physically valid, positive particle size."""
+    """Ensures every measurement is a physically valid, positive particle size. Checks the size of data is sufficient for statistic computations."""
+    min_measurements_for_statistics :int = 3  # variance, std need n=2, skewness with bias=False need at least 3
+    if len(data.sizes) < min_measurements_for_statistics:
+        message :str = f"At least {min_measurements_for_statistics} measurements are required, got {len(data.sizes)}."
+        logging.error(message)
+        raise InvalidInputError(message)
+    
     if np.any(data.sizes <= 0):
         invalid_count :int = int(np.sum(data.sizes <= 0))
         message :str = f"Found {invalid_count} non-positive value(s) in the measurements. Particle sizes must be greater than zero."

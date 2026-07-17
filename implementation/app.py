@@ -6,6 +6,7 @@ from dash.exceptions import PreventUpdate
 from plotly.graph_objects import Figure
 import numpy as np
 import os
+import logging
 from typing import Any
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from file_loader import derive_dataset_label
 from printer import Printer, FilePrinter
 from output_printing import print_histogram_summary
 from csv_output import write_histogram_to_csv
+from domain_errors import AppError
 
 from colors import HISTOGRAM_COLORS, ORIGIN_CLASSIC_COLORS, DEFAULT_HISTOGRAM_COLOR, DARK_BORDER_COLOR
 from colors import PANEL_BORDER_COLOR, PANEL_SHADOW_COLOR, BG_COLOR, LAYOUT_COLOR, BTN_HOVER_BORDER_COLOR
@@ -448,19 +450,22 @@ def build_app(
         State("histogram-id", "data"),
         prevent_initial_call=True,
     )
-    def save_histogram_png(n_clicks: int, figure_data: dict, histogram_id: int) -> int:
+    def save_histogram_png(n_clicks: int, figure_data: dict, histogram_id: int) -> int | Any:
         """Exports the current histogram figure to a PNG file under OUTPUT_GRAPH_PATH."""
         if not n_clicks:
             raise PreventUpdate
 
-        figure :Figure = Figure(figure_data)
-        dataset_label :str = "" if not label else f"_{label}"
+        try:
+            figure :Figure = Figure(figure_data)
+            dataset_label :str = "" if not label else f"_{label}"
 
-        filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{histogram_id}.png"
-        output_path :Path = Path(os.path.join(OUTPUT_GRAPH_PATH, filename))
-        figure.write_image(output_path, width=PNG_EXPORT_WIDTH_IN_PIXELS, height=PNG_EXPORT_HEIGHT_IN_PIXELS, scale=PNG_EXPORT_SCALE)
+            filename :str = f"{OUTPUT_GRAPH_NAME_PREFIX}{dataset_label}_{histogram_id}.png"
+            output_path :Path = Path(os.path.join(OUTPUT_GRAPH_PATH, filename))
+            figure.write_image(output_path, width=PNG_EXPORT_WIDTH_IN_PIXELS, height=PNG_EXPORT_HEIGHT_IN_PIXELS, scale=PNG_EXPORT_SCALE)
 
-        return n_clicks
+            return n_clicks
+        except AppError:
+            return dash.no_update
 
 
     @app.callback(
@@ -470,35 +475,39 @@ def build_app(
         State("histogram-id", "data"),
         prevent_initial_call=True
     )
-    def print_histogram_data(n_clicks: int, bin_width_slider: float, histogram_id: int) -> int:
+    def print_histogram_data(n_clicks: int, bin_width_slider: float, histogram_id: int) -> int | Any:
         """Prints the histogram summary to the console and, if enabled, writes it to txt/csv files."""
         if not n_clicks:
             raise PreventUpdate
 
-        histogram :HistogramResult = compute_histogram(
-            data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
-        
-        # print readable histogram summary
-        dataset_label :str = "" if not label else f"{label} "
-        code :str = f"{dataset_label}no. {histogram_id}"
-        print_histogram_summary(printer, histogram, code)  # console or empty printer
-
-        if output_in_file:
-            dataset_label_for_file :str = str(label)
-            if len(dataset_label_for_file) > 0:
-                dataset_label_for_file += '_'
-            base_filename :str = f"histogram_summary_{dataset_label_for_file}v_{histogram_id}"
+        try:
+            histogram :HistogramResult = compute_histogram(
+                data, bin_width_slider, initial_histogram.max_value, initial_histogram.nanoparticle_count)
             
-            if "txt" in output_formats:
-                # print readable histogram summary in a file
-                version_printer :Printer = FilePrinter(OUTPUT_HISTOGRAM_TXT_PATH / f"{base_filename}.txt")
-                print_histogram_summary(version_printer, histogram, code)
-                version_printer.close()
-            
-            if "csv" in output_formats:
-                write_histogram_to_csv(histogram, OUTPUT_HISTOGRAM_CSV_PATH / f"{base_filename}.csv")
+            # print readable histogram summary
+            dataset_label :str = "" if not label else f"{label} "
+            code :str = f"{dataset_label}no. {histogram_id}"
+            print_histogram_summary(printer, histogram, code)  # console or empty printer
 
-        return n_clicks
+            if output_in_file:
+                dataset_label_for_file :str = str(label)
+                if len(dataset_label_for_file) > 0:
+                    dataset_label_for_file += '_'
+                base_filename :str = f"histogram_summary_{dataset_label_for_file}v_{histogram_id}"
+                
+                if "txt" in output_formats:
+                    # print readable histogram summary in a file
+                    version_printer :Printer = FilePrinter(OUTPUT_HISTOGRAM_TXT_PATH / f"{base_filename}.txt")
+                    print_histogram_summary(version_printer, histogram, code)
+                    version_printer.close()
+                
+                if "csv" in output_formats:
+                    write_histogram_to_csv(histogram, OUTPUT_HISTOGRAM_CSV_PATH / f"{base_filename}.csv")
+
+            return n_clicks
+    
+        except AppError:
+            return dash.no_update
 
 
     @app.callback(

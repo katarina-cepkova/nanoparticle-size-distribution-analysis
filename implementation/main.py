@@ -82,8 +82,9 @@ def build_printer_for_console_app(args: argparse.Namespace) -> Printer:
     printers :list[Printer] = []
     if "console" in args.output:
         printers.append(ConsolePrinter())
-    if "file" in args.output:
-        printers.append(FilePrinter(args.output_txt_file))
+    if "file" in args.output and "txt" in args.format:
+        txt_printer :FilePrinter = FilePrinter(args.output_txt_file)
+        printers.append(txt_printer)
 
     printer :Printer = CompositePrinter(printers)
     return printer

@@ -10,6 +10,7 @@ from domain_errors import OutputPathError
 
 def write_histogram_to_csv(histogram: HistogramResult, path: Path) -> None:
     """Writes one row per bin: edges, count, and percentage."""
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)

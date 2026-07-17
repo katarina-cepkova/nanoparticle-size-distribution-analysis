@@ -39,6 +39,19 @@ ALPHA :float = float(os.getenv('ALPHA', 0.05))  # significance level for statist
 BIN_WIDTH_IN_NM :float = float(os.getenv('BIN_WIDTH_IN_NM', 0.25))
 
 
+class _ConsoleFormatter(logging.Formatter):
+    """Plain text for INFO; prefixed for WARNING/ERROR so problems stand out."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        message :str = record.getMessage()
+        if record.levelno >= logging.ERROR:
+            return f"ERROR: {message}"
+        elif record.levelno >= logging.WARNING:
+            return f"WARNING: {message}"
+        return f"INFO: {message}"
+
+
+
 def _setup_directories() -> None:
     """Creates input, output, and log directories if they do not already exist."""
     # create input and output directories if they don't exist
@@ -64,8 +77,7 @@ def _setup_logging() -> None:
     # handler for console output - user-friendly messages
     console_handler :StreamHandler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
-    console_formatter :logging.Formatter = logging.Formatter('%(message)s')
-    console_handler.setFormatter(console_formatter)
+    console_handler.setFormatter(_ConsoleFormatter())
     logger.addHandler(console_handler)
 
     # handler for file output - detailed logs

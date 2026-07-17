@@ -169,7 +169,6 @@ def main() -> None:
         app.run()
 
     except AppError as e:
-        print(f"Error: {e.message}")
         sys.exit(1)
     finally:
         printer.close()

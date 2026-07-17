@@ -93,6 +93,10 @@ def _setup_logging() -> None:
     logging.getLogger("choreographer").setLevel(logging.WARNING)
     logging.getLogger("kaleido").setLevel(logging.WARNING)
 
+    # scipy, numpy have inbuilt warnings module writing to stderr outside of logging system
+    #  - direct it through our logging to have the same format
+    logging.captureWarnings(True)
+
 
 def _ensure_chrome_available() -> None:
     """Downloads headless Chrome for kaleido if not already present."""

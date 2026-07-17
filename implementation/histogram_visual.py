@@ -1,6 +1,5 @@
 import plotly.graph_objects as go
-from plotly.graph_objects import Figure, Bar, Scatter
-from scipy import stats
+from plotly.graph_objects import Figure, Bar
 import numpy as np
 import math
 

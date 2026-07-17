@@ -6,7 +6,6 @@ from dash.exceptions import PreventUpdate
 from plotly.graph_objects import Figure
 import numpy as np
 import os
-import logging
 from typing import Any
 from pathlib import Path
 
@@ -14,7 +13,7 @@ from fitting import FitResult
 from histogram import HistogramResult, compute_marks, compute_histogram
 from histogram_visual import build_visual_histogram, pick_x_dtick, pick_y_dtick, compute_nice_x_axis, compute_nice_y_axis
 from histogram_visual import X_AXIS_TICK0, Y_AXIS_TICK0
-from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, OUTPUT_DATA_PATH, INPUT_DATA_PATH
+from configuration import BIN_WIDTH_IN_NM, OUTPUT_GRAPH_PATH, OUTPUT_GRAPH_NAME_PREFIX, INPUT_DATA_PATH
 from configuration import OUTPUT_HISTOGRAM_CSV_PATH, OUTPUT_HISTOGRAM_TXT_PATH
 from configuration import PNG_EXPORT_WIDTH_IN_PIXELS, PNG_EXPORT_HEIGHT_IN_PIXELS, PNG_EXPORT_SCALE
 from file_loader import derive_dataset_label

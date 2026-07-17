@@ -23,7 +23,7 @@ from histogram import HistogramResult, compute_histogram, find_max_value
 from output_printing import print_measurement_summary, print_moments_summary, print_fit_and_ks_table
 from printer import Printer, FilePrinter, ConsolePrinter, CompositePrinter
 from app import build_app
-from csv_output import write_histogram_to_csv, write_statistics_csv
+from csv_output import write_statistics_csv
 
 
 def parse_args() -> argparse.Namespace:
@@ -193,7 +193,7 @@ def main() -> None:
         build_app(app, app_printer, data.sizes, histogram, fit_results_by_distribution, "file" in args.output, args.format)
         app.run()
 
-    except AppError as e:
+    except AppError:
         sys.exit(1)
     finally:
         if printer is not None:

@@ -2,8 +2,10 @@ import argparse
 import sys
 from dash import Dash
 from pathlib import Path
+import logging
+import numpy as np
 
-from domain_errors import AppError
+from domain_errors import AppError, InvalidInputError
 from data_loader import DataLoader, ParticleSizesData, ConsoleLoader, DirectoryLoader
 from file_loader import derive_dataset_label
 
@@ -112,6 +114,15 @@ def build_printer_for_dash_app(args: argparse.Namespace) -> Printer:
     return app_printer
 
 
+def validate_particle_sizes(data: ParticleSizesData) -> None:
+    """Ensures every measurement is a physically valid, positive particle size."""
+    if np.any(data.sizes <= 0):
+        invalid_count :int = int(np.sum(data.sizes <= 0))
+        message :str = f"Found {invalid_count} non-positive value(s) in the measurements. Particle sizes must be greater than zero."
+        logging.error(message)
+        raise InvalidInputError(message)
+    
+
 def run_statistics(data: ParticleSizesData, printer: Printer, args: argparse.Namespace) -> tuple[float, int, dict[str, FitResult]]:
     """Prints the measurement summary, moments, and distribution fits with KS test results.
 
@@ -161,6 +172,7 @@ def main() -> None:
     try:
         # data and initial measures
         data :ParticleSizesData = data_loader.load_data()
+        validate_particle_sizes(data)
         max_value, total_nanoparticles, fit_results_by_distribution = run_statistics(data, printer, args)
         histogram :HistogramResult = compute_histogram(data.sizes, BIN_WIDTH_IN_NM, max_value, total_nanoparticles)
 

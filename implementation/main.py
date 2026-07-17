@@ -172,10 +172,12 @@ def main() -> None:
     initialize_application()
     args :argparse.Namespace = parse_args()
     data_loader :DataLoader = build_data_loader(args)
-    printer :Printer = build_printer_for_console_app(args)
-    app_printer :Printer = build_printer_for_dash_app(args)
+    printer :Printer | None = None
+    app_printer :Printer | None = None
 
     try:
+        printer = build_printer_for_console_app(args)
+        app_printer = build_printer_for_dash_app(args)
         # data and initial measures
         data :ParticleSizesData = data_loader.load_data()
         validate_particle_sizes(data)
@@ -189,8 +191,10 @@ def main() -> None:
     except AppError as e:
         sys.exit(1)
     finally:
-        printer.close()
-        app_printer.close()
+        if printer is not None:
+            printer.close()
+        if app_printer is not None:
+            app_printer.close()
 
 
 if __name__ == "__main__":

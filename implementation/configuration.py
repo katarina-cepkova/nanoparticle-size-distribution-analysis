@@ -27,8 +27,8 @@ PNG_EXPORT_WIDTH_IN_PIXELS :int = int(os.getenv('PNG_EXPORT_WIDTH_IN_PIXELS', 16
 PNG_EXPORT_HEIGHT_IN_PIXELS :int = int(os.getenv('PNG_EXPORT_HEIGHT_IN_PIXELS', 900))
 PNG_EXPORT_SCALE :int = int(os.getenv('PNG_EXPORT_SCALE', 2))
 
-OUTPUT_HISTOGRAM_CSV_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_CSV_PATH', 'data/output_data/csv_histogram')
-OUTPUT_HISTOGRAM_TXT_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_TXT_PATH', 'data/output_data/txt_histogram')
+OUTPUT_HISTOGRAM_CSV_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_CSV_PATH', 'data/output_data/csv_histograms')
+OUTPUT_HISTOGRAM_TXT_PATH :Path = PROJECT_ROOT / os.getenv('OUTPUT_HISTOGRAM_TXT_PATH', 'data/output_data/txt_histograms')
 
 LOG_DIR :Path = PROJECT_ROOT / os.getenv('LOG_DIR', 'logs')
 

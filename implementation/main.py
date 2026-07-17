@@ -128,6 +128,11 @@ def validate_particle_sizes(data: ParticleSizesData) -> None:
         logging.error(message)
         raise InvalidInputError(message)
     
+    if np.std(data.sizes) == 0:
+        message :str = "All measurements are identical — distribution fitting requires variation in the data."
+        logging.error(message)
+        raise InvalidInputError(message)
+    
 
 def run_statistics(data: ParticleSizesData, printer: Printer, args: argparse.Namespace) -> tuple[float, int, dict[str, FitResult]]:
     """Prints the measurement summary, moments, and distribution fits with KS test results.

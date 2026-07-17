@@ -88,11 +88,17 @@ use that same one everywhere else in this guide.
 
 ---
 
-## 5. Activating the virtual environment
+## 5. Setting up the virtual environment
 
-This project comes with a `.venv` folder — a self-contained Python
-environment that keeps this project's dependencies separate from anything
-else on your computer. Activate it before running anything:
+You need a self-contained Python environment (a `.venv` folder) so this
+project's dependencies stay separate from anything else on your
+computer. It isn't included in the project files — create it once:
+
+```
+python -m venv .venv          # Windows/macOS/Linux, run once from the project root
+```
+
+Then activate it before running anything:
 
 - **Windows (PowerShell)**:
   ```

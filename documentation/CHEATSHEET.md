@@ -12,6 +12,9 @@ See also: **[README](../README.md)** · **[DEVELOPER DOCUMENTATION](DEV_DOC.md)*
 ## Setup (once per machine)
 
 ```bash
+# create the virtual environment (once)
+python -m venv .venv
+
 # activate the virtual environment
 .venv\Scripts\activate          # Windows
 source .venv/bin/activate       # macOS / Linux

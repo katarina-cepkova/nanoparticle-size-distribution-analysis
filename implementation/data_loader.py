@@ -74,6 +74,10 @@ class ConsoleLoader(DataLoader):
             input_line = input().strip()
 
         counts[f"input_{input_number}"] = count  # commit the final group
+        if (len(sizes) == 0):
+            err :EmptyMeasurementsError = EmptyMeasurementsError(Path("console input"))
+            logging.error(err.message)
+            raise err
 
         return ParticleSizesData(sizes=np.array(sizes), counts=counts, total_count=len(sizes))
 

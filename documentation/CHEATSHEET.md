@@ -44,8 +44,8 @@ python main.py
 |---|---|---|---|
 | `--source` | `console`, `file` | `file` | Where measurements come from |
 | `--output` | `console`, `file` (one or both) | `console file` | Where the report is written |
-| `--output-txt-file` | any path | auto-generated | Custom path for the `.txt` report (needs `file` in `--output` and `txt` in `--format`) |
-| `--output-csv-file` | any path | auto-generated | Custom path for the `.csv` report (needs `file` in `--output` and `csv` in `--format`) |
+| `--output-txt-file` | any path | auto-generated | Custom path for the `.txt` report (needs `file` in `--output` and `txt` in `--format`). Relative paths resolve against your output folder, not cwd. |
+| `--output-csv-file` | any path | auto-generated | Custom path for the `.csv` report (needs `file` in `--output` and `csv` in `--format`). Relative paths resolve against your output folder, not cwd. |
 | `--format` | `txt`, `csv` (one or both) | `txt` | Which file format(s) to write, when `file` is included in `--output` |
 
 ```bash

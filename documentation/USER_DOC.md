@@ -233,6 +233,13 @@ You can customize how it runs by adding switches after `python main.py`:
 | `--output-txt-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.txt` report (only relevant if `file` is in `--output` and `txt` is in `--format`). |
 | `--output-csv-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.csv` report (only relevant if `file` is in `--output` and `csv` is in `--format`). |
 
+For both of these, a **relative** path (e.g. `test_output/report.txt`)
+is resolved against your output folder (`OUTPUT_DATA_PATH`), not against
+whatever directory you happened to run the command from — so it always
+ends up alongside your other reports. An **absolute** path (e.g.
+`C:\Users\You\Desktop\report.txt`) is used exactly as given, wherever
+that is.
+
 **Examples:**
 
 Only print the report to the console, skip the file:

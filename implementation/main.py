@@ -11,6 +11,7 @@ from configuration import initialize_application
 from configuration import SEPARATOR, END_OF_INPUT, CSV_PARTICLE_COLUMN_NAME, XLSX_PARTICLE_COLUMN_INDEX
 from configuration import INPUT_DATA_PATH, OUTPUT_DATA_PATH
 from configuration import BIN_WIDTH_IN_NM
+from configuration import PROJECT_ROOT
 
 from moments import compute_moments, MomentsResult
 from fitting import fit_lognormal, fit_normal, fit_lorentzian, FitResult
@@ -63,7 +64,17 @@ def parse_args() -> argparse.Namespace:
         default=["txt"],
         help="File fomrat(s) for the report, used only when 'file' is included in --output (default: txt)."
     )
-    return parser.parse_args()
+    args :argparse.Namespace = parser.parse_args()
+    
+    # user-supplied relative paths resolve against OUTPUT_DATA_PATH,
+    # not against whatever directory the script was invoked from
+    # matching where the auto-generated defaults already live
+    if not args.output_txt_file.is_absolute():
+        args.output_txt_file = OUTPUT_DATA_PATH / args.output_txt_file
+    if not args.output_csv_file.is_absolute():
+        args.output_csv_file = OUTPUT_DATA_PATH / args.output_csv_file
+
+    return args
 
 
 def build_data_loader(args: argparse.Namespace) -> DataLoader:

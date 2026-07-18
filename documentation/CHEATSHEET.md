@@ -50,12 +50,12 @@ python main.py
 
 ```bash
 # common examples
-python main.py --output console                        # skip the report file entirely
-python main.py --source console                          # type measurements in by hand
-python main.py --format csv                               # only write the CSV report, not txt
-python main.py --format txt csv                           # write both txt and csv reports
-python main.py --output-csv-file my_results.csv           # custom CSV report filename
-python main.py --source console --output file             # type data in, only save to file
+python main.py --output console                      # skip the report file entirely
+python main.py --source console                      # type measurements in by hand
+python main.py --format csv                          # only write the CSV report, not txt
+python main.py --format txt csv                      # write both txt and csv reports
+python main.py --output-csv-file my_results.csv      # custom CSV report filename
+python main.py --source console --output file        # type data in, only save to file
 ```
 
 ## Checking Python is installed

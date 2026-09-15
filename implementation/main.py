@@ -66,6 +66,14 @@ def parse_args() -> argparse.Namespace:
         default=["txt"],
         help="File fomrat(s) for the report, used only when 'file' is included in --output (default: txt)."
     )
+    parser.add_argument(
+        "--ks-calibration",
+        action="store_true",
+        default=False,
+        help="Runs the KS goodness-of-fit test with a bootstrap-corrected p-value "
+            "(see STATISTICS.md). Off by default since it repeats fit+test 1000x "
+            "per distribution and is noticeably slower.",
+    )
     args :argparse.Namespace = parser.parse_args()
     
     # user-supplied relative paths resolve against OUTPUT_DATA_PATH,
@@ -156,7 +164,9 @@ def run_statistics(data: ParticleSizesData, printer: Printer, args: argparse.Nam
     fit_results_by_distribution :dict[str, FitResult] = {fit.distribution: fit for fit in fits}
 
     # ks test
-    ks_results :list[KSTestResult] = [compute_ks_test(data.sizes, fit) for fit in fits]
+    ks_results :list[KSTestResult] | None = None
+    if args.ks_calibration:
+        ks_results = [compute_ks_test(data.sizes, fit) for fit in fits]
     print_fit_and_ks_table(printer, fits, ks_results)
 
     # print statistic results in csv if selected
@@ -170,9 +180,11 @@ def main() -> None:
     """Entry point: initialises the app, selects a data loader, runs the statistics report,
     then launches the dash app with the histogram.
 
-    Only data loading and statistics/app execution are wrapped in the try block below,
-    since those are the only steps that can raise an AppError; building loaders and
-    printers is pure configuration and can't fail that way.
+    Everything from building the printers through app.run() is wrapped in the
+    try block, since printer construction (opening files) and data loading can
+    both raise an AppError. Only initialize_application() and parse_args()
+    happen outside it — pure configuration that isn't expected to fail with
+    a user-facing error.
     """
     initialize_application()
     args :argparse.Namespace = parse_args()

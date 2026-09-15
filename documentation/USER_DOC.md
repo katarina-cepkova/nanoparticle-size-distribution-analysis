@@ -242,6 +242,7 @@ You can customize how it runs by adding switches after `python main.py`:
 | `--format` | `txt`, `csv` (one or both, space-separated) | `txt` | Which file format(s) the report is written in — only relevant if `file` is included in `--output`. `csv` produces a single machine-readable row (all moments and fit/KS results as columns), useful if you want to load the results into Excel, pandas, or another analysis tool rather than just read them. |
 | `--output-txt-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.txt` report (only relevant if `file` is in `--output` and `txt` is in `--format`). |
 | `--output-csv-file` | any file path | auto-generated name in your output folder | Custom name/location for the `.csv` report (only relevant if `file` is in `--output` and `csv` is in `--format`). |
+| `--ks-calibration` | flag (no value) | off | Also runs the KS goodness-of-fit test with a corrected p-value (see [STATISTICS.md](STATISTICS.md#a-catch-with-this-p-value-and-how-its-corrected)). Off by default, since it's noticeably slower (repeats the fit ~1000 times per distribution). When off, the report doesn't include a KS test section at all, rather than showing a result that's known to be overly optimistic. |
 
 For both of these, a **relative** path (e.g. `test_output/report.txt`)
 is resolved against your output folder (`OUTPUT_DATA_PATH`), not against
@@ -277,6 +278,11 @@ python main.py --format txt csv      # both
 Save the CSV report to a specific file:
 ```
 python main.py --format csv --output-csv-file my_results.csv
+```
+
+Include the corrected (slower) KS test in the report:
+```
+python main.py --ks-calibration
 ```
 
 ---

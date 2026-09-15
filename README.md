@@ -23,7 +23,9 @@ measures like the polydispersity index and Sauter mean diameter);
 theoretical distribution — Normal, Lognormal, or Lorentzian — best explains that shape, fitted via **Maximum Likelihood Estimation** (MLE); 
 - whether that fitted distribution is actually a statistically defensible
 description of the data, checked with a **Kolmogorov–Smirnov test** rather
-than left to visual judgment. The interactive chart and PNG export exist
+than left to visual judgment — including an optional bootstrap-corrected
+p-value (`--ks-calibration`) that accounts for the fit being estimated
+from the same data it's tested against. The interactive chart and PNG export exist
 to make that analysis easier to work with, not to replace it.
 
 ## Documentation

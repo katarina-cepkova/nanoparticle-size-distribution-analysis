@@ -260,31 +260,37 @@ def build_fit_rows(fits: list[FitResult]) -> list[Row]:
 def build_ks_rows(ks_results: list[KSTestResult]) -> list[Row]:
     """
     Builds the comparison rows for the KS-test part of the table: the KS
-    statistic, the p-value, and a "REJECTED" verdict for any distribution
-    whose p-value falls below the ALPHA significance level (blank otherwise).
+    statistic, the naive p-value, the bootstrap-corrected p-value, and a
+    "REJECTED"/"NOT REJECTED" verdict based on whether the corrected p-value
+    falls below the ALPHA significance level. The verdict uses the corrected
+    p-value, not the naive one, since the naive p-value is biased (see
+    KSTestResult / STATISTICS.md).
     """
     
     rows :list[Row] = [
         ("KS Statistic", [result.statistic for result in ks_results]),
         ("P-value",   [result.p_value for result in ks_results]),
+        ("Corrected P-value", [result.corrected_p_value for result in ks_results]),
         # null hypothesis (data follows this distribution) is rejected below the ALPHA threshold
-        ("KS Verdict", ["REJECTED" if result.p_value < ALPHA else "" for result in ks_results])
+        ("KS Verdict", ["REJECTED" if result.corrected_p_value < ALPHA else "NOT REJECTED" for result in ks_results])
     ]
 
     return rows
 
 
-def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: list[KSTestResult]) -> None:
+def print_fit_and_ks_table(printer: Printer, fits: list[FitResult], ks_results: list[KSTestResult] | None) -> None:
     """
-    Prints one combined section: a section header followed by a single table
-    that shows fit parameters (mu/sigma/x0/gamma, log-likelihood + winner,
-    mode, FWHM) and KS test results (statistic, p-value, verdict) side by
-    side per distribution, with a divider line between the two blocks.
+    Prints fit parameters for each distribution, plus KS test results if
+    ks_results is provided (None when --ks-calibration wasn't requested —
+    the bootstrap calibration is skipped, so no KS section is shown at all).
     """
     fit_rows :list[Row] = build_fit_rows(fits)
-    ks_rows :list[Row] = build_ks_rows(ks_results)
+    row_groups :list[list[Row]] = [fit_rows]
+    if ks_results is not None:
+        ks_rows :list[Row] = build_ks_rows(ks_results)
+        row_groups.append(ks_rows)
 
-    print_grouped_distribution_table(printer, fits, [fit_rows, ks_rows])
+    print_grouped_distribution_table(printer, fits, row_groups)
 
 
 def compute_num_of_digits(bin_count: int) -> int:

@@ -1,6 +1,7 @@
 import csv
 import logging
 from pathlib import Path
+from configuration import ALPHA
 from histogram import HistogramResult
 from moments import MomentsResult
 from fitting import FitResult
@@ -33,7 +34,7 @@ def write_statistics_csv(
         path: Path,
         moments: MomentsResult,
         fits: list[FitResult],
-        ks_results: list[KSTestResult]
+        ks_results: list[KSTestResult] | None
     ) -> None:
     """Writes one row: descriptive moments, plus per-distribution fit/KS values 
     with a distribution-name prefix."""
@@ -53,7 +54,7 @@ def write_statistics_csv(
     add("PDI", moments.PDI)
     add("D32", moments.D32)
 
-    for fit, ks in zip(fits, ks_results):
+    for fit in fits:
         prefix :str = fit.distribution
         add(f"{prefix}_loc", fit.loc)
         add(f"{prefix}_scale", fit.scale)
@@ -68,8 +69,14 @@ def write_statistics_csv(
         add(f"{prefix}_fwhm", fit.fwhm)
         add(f"{prefix}_rel_fwhm", fit.rel_fwhm)
         add(f"{prefix}_log_likelihood", fit.log_likelihood)
-        add(f"{prefix}_ks_statistic", ks.statistic)
-        add(f"{prefix}_ks_pvalue", ks.p_value)
+
+    if ks_results is not None:
+        for fit, ks in zip(fits, ks_results):
+            prefix :str = fit.distribution
+            add(f"{prefix}_ks_statistic", ks.statistic)
+            add(f"{prefix}_ks_pvalue", ks.p_value)
+            add(f"{prefix}_ks_corrected_pvalue", ks.corrected_p_value)
+            add(f"{prefix}_ks_rejected", ks.corrected_p_value < ALPHA)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -78,6 +85,6 @@ def write_statistics_csv(
             writer.writerow(header)
             writer.writerow(values)
     except (IsADirectoryError, PermissionError, OSError) as e:
-            err :OutputPathError = OutputPathError(path, str(e))
-            logging.error(err.message)
-            raise err from e
+        err :OutputPathError = OutputPathError(path, str(e))
+        logging.error(err.message)
+        raise err from e

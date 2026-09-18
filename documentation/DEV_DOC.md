@@ -75,8 +75,8 @@ main.py
   ├─ fit_normal / fit_lognormal / fit_lorentzian(data.sizes)
   │     → FitResult (×3)
   |
-  ├─ compute_ks_test(data.sizes, fit) for each fit
-  |     → KSTestResult (×3)
+  ├─ compute_ks_test(data.sizes, fit) for each fit — only if --ks-calibration
+  |     → KSTestResult (×3), or ks_results stays None
   |
   ├─ compute_histogram(data.sizes, BIN_WIDTH_IN_NM, ...)
   │     → HistogramResult
@@ -110,7 +110,7 @@ interactive chart.
 | `file_loader.py` | `FileLoader` ABC with `CsvFileLoader` / `ExcelFileLoader`; also `derive_dataset_label()`, used for labeling output filenames/reports based on a single input subfolder |
 | `histogram.py` | `HistogramResult` dataclass and `compute_histogram()` — bins data, computes per-bin percentages, empirical mode, and stores `bin_width` as a first-class field |
 | `fitting.py` | `FitResult` dataclass and `fit_normal()` / `fit_lognormal()` / `fit_lorentzian()` — MLE fitting via `scipy.stats`, plus FWHM via root-finding |
-| `ks_test.py` | Kolmogorov–Smirnov goodness-of-fit test against each fitted distribution |
+| `ks_test.py` | Kolmogorov–Smirnov goodness-of-fit test against each fitted distribution; optionally recomputes a bootstrap-corrected p-value (`--ks-calibration`, see §4.8) |
 | `moments.py` | `MomentsResult` dataclass — mean, variance, std, skewness, CV, median, PDI, D32 (Sauter mean diameter) |
 | `statistics_helpers.py` | Shared helpers (`compute_cv`, `compute_PDI`) used by both `moments.py` and `fitting.py` |
 | `histogram_visual.py` | Builds the Plotly `Figure` — bars, fit curves, axis tick/range logic |
@@ -301,6 +301,45 @@ not just inside the directories `_setup_directories()` already created.
 program computes, in a structured, columnar form, it's a natural
 candidate to later become an *input* format for other tools.
 
+### 4.8 KS test parameters are fit from the same data being tested — and the optional fix for it
+
+`ks_test.py` tests each fitted distribution against the same data that
+distribution's parameters (`mu`/`sigma`, `x0`/`gamma`) were estimated
+from in `fitting.py`. This is methodologically circular: MLE parameters
+are, by construction, the ones that make the observed data most
+probable, so testing the fit against that same data systematically
+understates how much the fit actually deviates — the naive `p_value` on
+`KSTestResult` is optimistically biased, not a neutral estimate.
+
+`KSTestResult.corrected_p_value` addresses this via a parametric
+bootstrap: `_calibrate_pvalue()` (shared across all three
+`ks_test_*` functions) repeats the fit+test procedure `N_BOOTSTRAP_SAMPLES`
+(1000) times on synthetic data drawn directly from the fitted
+distribution — data known, by construction, to actually come from that
+curve — and returns the fraction of those repetitions whose KS statistic
+meets or exceeds the one observed on the real data. That fraction is a
+p-value calibrated against the same circularity the naive test suffers
+from, rather than against the classical (inapplicable) KS reference
+distribution.
+
+This is gated behind `--ks-calibration` (off by default) rather than
+always computed, because 1000 repeated fit+test cycles per distribution
+measurably slows down `run_statistics()`. When the flag is off,
+`ks_results` stays `None` throughout `main.py`, `output_printing.py`,
+and `csv_output.py` — no KS section is printed and no `_ks_*` columns
+appear in the CSV export, rather than falling back to showing the known-
+biased naive p-value as if it were reliable. `print_fit_and_ks_table()`
+and `write_statistics_csv()` both branch on `ks_results is not None` to
+decide whether to include that section at all.
+
+`_calibrate_pvalue()` takes two `Callable` parameters
+(`generate_sample`, `refit_and_test`) rather than being duplicated per
+distribution — each `ks_test_*` function supplies its own
+distribution-specific sampling (`stats.norm.rvs`/`stats.lognorm.rvs`/
+`stats.cauchy.rvs`) and refitting logic as small closures, while the
+bootstrap loop itself (draw sample, refit, compare, tally) lives in one
+place.
+
 ---
 
 ## 5. Coding conventions
@@ -378,6 +417,9 @@ throughout development, primarily by:
   the expected behavior described in §4.4–4.6.
 - Cross-checking statistical outputs (moments, fit parameters, KS
   results) against values computed independently for a known sample.
+- Running both with and without `--ks-calibration`, checking that the
+  report/CSV cleanly omit the KS section when it's off rather than
+  falling back to the biased naive p-value.
 
 If automated tests are added later, the layer separation in §2 makes the
 computation modules (`histogram.py`, `fitting.py`, `moments.py`,

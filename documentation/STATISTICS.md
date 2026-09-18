@@ -188,7 +188,6 @@ closely everywhere. The KS test measures the single largest gap between
 the two, anywhere along the chart, and turns that gap into a formal
 verdict.
 
-
 **Turning that gap into a yes/no answer:**
 
 - The test starts by assuming the fit *is* correct (this assumption is
@@ -202,8 +201,47 @@ verdict.
   statistical reason to doubt the fit.
 - The cutoff for "small" is the significance level, configured as
   `ALPHA` (default `0.05`, i.e. 5%) — a standard, conventional threshold
-  in statistics. A p-value below `ALPHA` rejects the fit; a p-value at
-  or above it does not.
+  in statistics.
+
+### A catch with this p-value, and how it's corrected
+
+There's a subtlety that matters here: the curve being tested was itself
+*fit from this same data* (step 2). The classic KS test assumes the
+opposite — that the curve's parameters were known beforehand,
+independent of the data being checked. Testing a curve against the very
+data used to build it makes the fit look better than it really is, so
+the plain p-value described above is **systematically optimistic** — it
+tends to under-report how much the fit actually deviates from the data.
+
+To correct for this, the program can optionally recompute a **corrected
+p-value** using a technique called a parametric bootstrap: it repeatedly
+(1000 times) generates a synthetic dataset that genuinely does come from
+the fitted curve, re-fits the curve on that synthetic data, and re-runs
+the KS test on it — building up a picture of how large the KS gap tends
+to be even in the best case, where the data really does match the
+curve. The real gap is then compared against that picture instead of
+against the classic (biased) reference, giving a fair, corrected
+p-value.
+
+This is **optional**, via the `--ks-calibration` flag (off by default —
+see the [Cheatsheet](CHEATSHEET.md) — since repeating the fit-and-test
+1000 times per distribution is noticeably slower than a single pass).
+When it's off, the report simply doesn't include a KS test section at
+all, rather than showing the plain, biased p-value as if it were
+trustworthy. When it's on, the report shows both the naive p-value (for
+transparency) and the corrected one — the corrected one is what the
+`REJECTED`/`NOT REJECTED` verdict is based on.
+
+### One more limit worth knowing, regardless of correction
+
+Even with the corrected p-value, this test can only ever tell you one
+side of the story: it can say with reasonable confidence that your data
+*doesn't* match a curve (a rejection). It can never *prove* your data
+truly follows that curve — "not rejected" means the test found no
+strong evidence against the fit, not that the fit has been confirmed
+correct. This is a general property of hypothesis testing, not something
+specific to this program, but it's worth keeping in mind when reading a
+`NOT REJECTED` verdict.
 
 This is what turns "the curve looks about right" into a specific,
 repeatable conclusion — the same test applied the same way every time,
@@ -217,7 +255,7 @@ rather than a judgment call made by eye.
 |---|---|
 | Moments (mean, median, spread, skewness, CV, PDI, D32) | "What does this batch of particles look like, without assuming any particular shape?" |
 | Fitted parameters (μ/σ or x₀/γ) and FWHM per curve | "What theoretical curve best matches this data, and how wide/positioned is it?" |
-| KS test statistic and p-value per curve | "Is that fitted curve actually a statistically defensible description of the data, or should it be rejected?" |
+| KS test statistic, naive and (if `--ks-calibration`) corrected p-value | "Is that fitted curve actually a statistically defensible description of the data, or should it be rejected?" |
 
 Every one of these values is computed once by the program and reused
 everywhere it's displayed (in the printed report and in the interactive

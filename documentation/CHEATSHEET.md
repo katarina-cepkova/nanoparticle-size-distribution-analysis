@@ -47,15 +47,17 @@ python main.py
 | `--output-txt-file` | any path | auto-generated | Custom path for the `.txt` report (needs `file` in `--output` and `txt` in `--format`). Relative paths resolve against your output folder, not cwd. |
 | `--output-csv-file` | any path | auto-generated | Custom path for the `.csv` report (needs `file` in `--output` and `csv` in `--format`). Relative paths resolve against your output folder, not cwd. |
 | `--format` | `txt`, `csv` (one or both) | `txt` | Which file format(s) to write, when `file` is included in `--output` |
+| `--ks-calibration` | flag | off | Also runs the KS test with a bootstrap-corrected p-value (see STATISTICS.md). Off by default — ~1000x slower per distribution. |
 
 ```bash
 # common examples
-python main.py --output console                      # skip the report file entirely
-python main.py --source console                      # type measurements in by hand
-python main.py --format csv                          # only write the CSV report, not txt
-python main.py --format txt csv                      # write both txt and csv reports
-python main.py --output-csv-file my_results.csv      # custom CSV report filename
-python main.py --source console --output file        # type data in, only save to file
+python main.py --output console                       # skip the report file entirely
+python main.py --source console                       # type measurements in by hand
+python main.py --format csv                           # only write the CSV report, not txt
+python main.py --format txt csv                       # write both txt and csv reports
+python main.py --output-csv-file my_results.csv       # custom CSV report filename
+python main.py --source console --output file         # type data in, only save to file
+python main.py --ks-calibration                       # also run the corrected (slower) KS test
 ```
 
 ## Checking Python is installed
